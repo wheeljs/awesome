@@ -38,21 +38,24 @@ function calculate_size_difference() {
   echo "$difference"
 }
 
+# 保存转换信息
+declare -a conversion_info
+
 # 处理单个文件转换
 function convert_file() {
-  input_path=$1
-  output_path=$2
-  output_dir=$3
+  local input_path=$1
+  local output_path=$2
+  local output_dir=$3
 
   # 如果 output_path 是目录，生成最终的输出路径
   if [ -d "$output_path" ]; then
-    filename=$(basename "$input_path")
+    local filename=$(basename "$input_path")
     output_path="$output_path/${filename%.*}.low.${filename##*.}"
     output_path=$(realpath "$output_path")  # 规范化输出路径
   elif [ -z "$output_path" ]; then
     # 如果output_path为空且指定了output_dir，则根据input_path生成默认的output_path
     if [ -n "$output_dir" ]; then
-      filename=$(basename "$input_path")
+      local filename=$(basename "$input_path")
       output_path="$output_dir/${filename%.*}.low.${filename##*.}"
       output_path=$(realpath "$output_path")  # 规范化输出路径
     else
@@ -72,23 +75,24 @@ function convert_file() {
   # 检查 ffmpeg 是否执行成功
   if [ $? -eq 0 ]; then
     # 获取转换前后的文件大小
-    input_size=$(get_file_size "$input_path")
-    output_size=$(get_file_size "$output_path")
+    local input_size=$(get_file_size "$input_path")
+    local output_size=$(get_file_size "$output_path")
 
     # 将文件大小转换为人类可读的格式
-    input_size_hr=$(human_readable_size $input_size)
-    output_size_hr=$(human_readable_size $output_size)
+    local input_size_hr=$(human_readable_size $input_size)
+    local output_size_hr=$(human_readable_size $output_size)
 
     # 计算文件大小的差值
-    size_difference=$(calculate_size_difference $input_size $output_size)
+    local size_difference=$(calculate_size_difference $input_size $output_size)
 
-    # 打印转换信息
-    echo "Converted:"
-    echo "Input: $input_path, Size: $input_size_hr MB"
-    echo "Output: $output_path, Size: $output_size_hr MB, $size_difference MB smaller than origin"
-    echo ""
+    # 保存转换信息
+    conversion_info+=("Input: $input_path, Size: $input_size_hr MB")
+    conversion_info+=("Output: $output_path, Size: $output_size_hr MB, $size_difference MB smaller than origin")
+    conversion_info+=("")
   else
-    echo "Error converting $input_path to $output_path"
+    # 保存转换失败信息
+    conversion_info+=("Error converting $input_path to $output_path")
+    conversion_info+=("")
   fi
 }
 
@@ -158,4 +162,10 @@ fi
 for arg in "$@"; do
   IFS=':' read -r input_path output_path <<< "$arg"
   convert_file "$input_path" "$output_path" "$output_dir"
+done
+
+# 输出所有文件的转换信息
+echo "Conversion Summary:"
+for info in "${conversion_info[@]}"; do
+  echo "$info"
 done
