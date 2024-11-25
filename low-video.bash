@@ -6,12 +6,14 @@ function show_help() {
 用法: $(basename "$0") [选项] 输入文件:输出文件 [输入文件2:输出文件2 ...]
 
 选项:
-  --gpu        使用 GPU 加速进行转换
-  --bitrate    设置视频比特率，默认为 1.5M
-  -h           显示帮助信息
+  --gpu            使用 GPU 加速进行转换
+  --bitrate        设置视频比特率，默认为 1.5M
+  --output-dir     指定所有输出文件的目录
+  -h               显示帮助信息
 
 示例:
   $(basename "$0") --gpu --bitrate 2M video1.mp4:output1.mp4 video2.mp4:output2.mp4
+  $(basename "$0") --gpu --output-dir /path/to/output video1.mp4 video2.mp4
 EOF
 }
 
@@ -40,6 +42,7 @@ function calculate_size_difference() {
 function convert_file() {
   input_path=$1
   output_path=$2
+  output_dir=$3
 
   # 如果 output_path 是目录，生成最终的输出路径
   if [ -d "$output_path" ]; then
@@ -47,14 +50,19 @@ function convert_file() {
     output_path="$output_path/${filename%.*}.low.${filename##*.}"
     output_path=$(realpath "$output_path")  # 规范化输出路径
   elif [ -z "$output_path" ]; then
-  # 如果output_path为空，则根据input_path生成默认的output_path
-    output_path="${input_path%.*}.low.${input_path##*.}"
+    # 如果output_path为空且指定了output_dir，则根据input_path生成默认的output_path
+    if [ -n "$output_dir" ]; then
+      filename=$(basename "$input_path")
+      output_path="$output_dir/${filename%.*}.low.${filename##*.}"
+      output_path=$(realpath "$output_path")  # 规范化输出路径
+    else
+      output_path="${input_path%.*}.low.${input_path##*.}"
+    fi
   fi
 
   echo -ne "\033]0;Converting $input_path...\007"
 
   if [ "$use_gpu" = true ]; then
-    # ./ffmpeg.exe -vsync 0 -hwaccel cuvid -c:v h264_cuvid -resize 1280x720 -i "$input_path" -c:a copy -c:v h264_nvenc -b:v 2M "$output_path"
     ./ffmpeg.exe -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i "$input_path" -c:a copy -c:v h264_nvenc -b:v $bitrate -vbr 1 -map_metadata 0 "$output_path"
   else
     # 调用ffmpeg.exe进行转换
@@ -90,6 +98,7 @@ args=$#
 # 初始化变量
 use_gpu=false
 bitrate="1.5M"
+output_dir=""
 
 # 解析命令行参数
 while getopts ":h-:" opt; do
@@ -100,6 +109,9 @@ while getopts ":h-:" opt; do
     bitrate)
       bitrate=$OPTARG
       ;;
+    output-dir)
+      output_dir=$OPTARG
+      ;;
     h)
       show_help
       exit 0
@@ -109,6 +121,9 @@ while getopts ":h-:" opt; do
         use_gpu=true
       elif [[ $OPTARG == "bitrate" ]]; then
         bitrate=${!OPTIND}
+        OPTIND=$((OPTIND + 1))
+      elif [[ $OPTARG == "output-dir" ]]; then
+        output_dir=${!OPTIND}
         OPTIND=$((OPTIND + 1))
       fi
       ;;
@@ -142,5 +157,5 @@ fi
 # 循环处理每个文件转换
 for arg in "$@"; do
   IFS=':' read -r input_path output_path <<< "$arg"
-  convert_file "$input_path" "$output_path"
+  convert_file "$input_path" "$output_path" "$output_dir"
 done
