@@ -9,11 +9,14 @@ function show_help() {
   --gpu            使用 GPU 加速进行转换
   --bitrate        设置视频比特率，默认为 1.5M
   --output-dir     指定所有输出文件的目录
+  --resize         设置目标文件的分辨率，例如 1280x720
   -h               显示帮助信息
 
 示例:
   $(basename "$0") --gpu --bitrate 2M video1.mp4:output1.mp4 video2.mp4:output2.mp4
   $(basename "$0") --gpu --output-dir /path/to/output video1.mp4 video2.mp4
+  $(basename "$0") --gpu --resize 1280x720 video1.mp4 video2.mp4
+  $(basename "$0") --gpu  --resize 1440:-1 video1.mp4 video2.mp4
 EOF
 }
 
@@ -65,12 +68,23 @@ function convert_file() {
 
   echo -ne "\033]0;Converting $input_path...\007"
 
+  local ffmpeg_command="./ffmpeg.exe -i \"$input_path\" -b:v $bitrate -map_metadata 0"
+
   if [ "$use_gpu" = true ]; then
-    ./ffmpeg.exe -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i "$input_path" -c:a copy -c:v h264_nvenc -b:v $bitrate -vbr 1 -map_metadata 0 "$output_path"
-  else
-    # 调用ffmpeg.exe进行转换
-    ./ffmpeg.exe -i "$input_path" -b:v $bitrate -map_metadata 0 "$output_path"
+    ffmpeg_command="./ffmpeg.exe -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i \"$input_path\" -c:a copy -c:v h264_nvenc -b:v $bitrate -vbr 1 -map_metadata 0"
   fi
+
+  if [ -n "$resize" ]; then
+    if [ "$use_gpu" = true ]; then
+      ffmpeg_command="$ffmpeg_command -vf 'hwdownload,format=nv12,scale=$resize'"
+    else
+      ffmpeg_command="$ffmpeg_command -vf scale=$resize"
+    fi
+  fi
+
+  ffmpeg_command="$ffmpeg_command \"$output_path\""
+
+  eval $ffmpeg_command
 
   # 检查 ffmpeg 是否执行成功
   if [ $? -eq 0 ]; then
@@ -103,6 +117,7 @@ args=$#
 use_gpu=false
 bitrate="1.5M"
 output_dir=""
+resize=""
 
 # 解析命令行参数
 while getopts ":h-:" opt; do
@@ -116,6 +131,9 @@ while getopts ":h-:" opt; do
     output-dir)
       output_dir=$OPTARG
       ;;
+    resize)
+      resize=$OPTARG
+      ;;
     h)
       show_help
       exit 0
@@ -128,6 +146,9 @@ while getopts ":h-:" opt; do
         OPTIND=$((OPTIND + 1))
       elif [[ $OPTARG == "output-dir" ]]; then
         output_dir=${!OPTIND}
+        OPTIND=$((OPTIND + 1))
+      elif [[ $OPTARG == "resize" ]]; then
+        resize=${!OPTIND}
         OPTIND=$((OPTIND + 1))
       fi
       ;;
