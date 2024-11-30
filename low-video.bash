@@ -44,6 +44,32 @@ function calculate_size_difference() {
 # 保存转换信息
 declare -a conversion_info
 
+# 同步文件的创建时间和修改时间
+function sync_timestamps() {
+  local input_path=$1
+  local output_path=$2
+
+  # 使用 touch 同步修改时间
+  touch -r "$input_path" "$output_path"
+
+  # 将 Linux 路径转换为 Windows 路径
+  local win_input_path=$(cygpath -w "$input_path")
+  local win_output_path=$(cygpath -w "$output_path")
+
+  # 获取文件的时间戳
+  local input_ctime=$(stat -c %W "$input_path")
+  local input_mtime=$(stat -c %Y "$input_path")
+
+  # 将 Unix 时间戳转换为 ISO8601 格式的字符串
+  local utc_create_time=$(date -u -d "@$input_ctime" "+%Y-%m-%dT%H:%M:%SZ")
+  local utc_modify_time=$(date -u -d "@$input_mtime" "+%Y-%m-%dT%H:%M:%SZ")
+
+  # 构建 PowerShell 命令
+  local powershell_command=$(printf '& ".\sync-time.ps1" %s %s' "$win_input_path" "$win_output_path")
+
+  powershell -Command ""
+}
+
 # 处理单个文件转换
 function convert_file() {
   local input_path=$1
@@ -98,6 +124,9 @@ function convert_file() {
 
     # 计算文件大小的差值
     local size_difference=$(calculate_size_difference $input_size $output_size)
+
+    # 同步输出文件的时间戳
+    sync_timestamps "$input_path" "$output_path"
 
     # 保存转换信息
     conversion_info+=("Input: $input_path, Size: $input_size_hr MB")
