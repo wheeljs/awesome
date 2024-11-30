@@ -96,8 +96,16 @@ function convert_file() {
 
   local ffmpeg_command="./ffmpeg.exe -i \"$input_path\" -b:v $bitrate -map_metadata 0"
 
+  # 检查输入文件是否为 WMV 格式
+  local decoder="h264_cuvid"
+  case "$input_path" in
+    *.wmv)
+      decoder="vc1_cuvid"
+      ;;
+  esac
+
   if [ "$use_gpu" = true ]; then
-    ffmpeg_command="./ffmpeg.exe -vsync 0 -hwaccel cuvid -c:v h264_cuvid -i \"$input_path\" -c:a copy -c:v h264_nvenc -b:v $bitrate -vbr 1 -map_metadata 0"
+    ffmpeg_command="./ffmpeg.exe -vsync 0 -hwaccel cuvid -c:v $decoder -i \"$input_path\" -c:a copy -c:v h264_nvenc -b:v $bitrate -vbr 1 -map_metadata 0"
   fi
 
   if [ -n "$resize" ]; then
