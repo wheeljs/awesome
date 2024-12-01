@@ -10,6 +10,7 @@ function show_help() {
   --bitrate        设置视频比特率，默认为 1.5M
   --output-dir     指定所有输出文件的目录
   --resize         设置目标文件的分辨率，例如 1280x720
+  --keep-m3u8      是否保留.m3u8文件格式，默认为false
   -h               显示帮助信息
 
 示例:
@@ -75,22 +76,47 @@ function convert_file() {
   local input_path=$1
   local output_path=$2
   local output_dir=$3
+  local output_path_ready=false
+  if [[ "$output_path" =~ \..+$ ]]; then
+    output_path_ready=true
+  fi
 
-  # 如果 output_path 是目录，生成最终的输出路径
-  if [ -d "$output_path" ]; then
-    local filename=$(basename "$input_path")
-    output_path="$output_path/${filename%.*}.low.${filename##*.}"
-    output_path=$(realpath "$output_path")  # 规范化输出路径
-  elif [ -z "$output_path" ]; then
-    # 如果output_path为空且指定了output_dir，则根据input_path生成默认的output_path
-    if [ -n "$output_dir" ]; then
-      local filename=$(basename "$input_path")
-      output_path="$output_dir/${filename%.*}.low.${filename##*.}"
-      output_path=$(realpath "$output_path")  # 规范化输出路径
-    else
-      output_path="${input_path%.*}.low.${input_path##*.}"
+  local input_dir=$(dirname "$input_path")
+  local filename=$(basename "$input_path")
+  local extension="${filename##*.}"
+
+  if [ -d "$output_dir" ]; then
+    output_dir="${output_dir%\/}"
+    # output_path不为空且仅有文件名（不包含/）
+    if [[ -n "$output_path" && ! "$output_path" =~ [/\\] ]]; then
+      output_path="$output_dir/$output_path"
+      output_path_ready=true
+    # output_path为空，使用output_dir作为目录
+    elif [ -z "$output_path" ]; then
+      output_path=$output_dir
     fi
   fi
+
+  # 如果output_path仅有文件名部分（不包含/），不支持这种format
+  if [[ -n "$output_path" && ! "$output_path" =~ [/\\] ]]; then
+    echo "Unsupport format: $input_path:$output_path"
+    return -1
+  fi
+  # 如果output_path为空，生成到input_path同样的目录
+  if [ -z "$output_path" ]; then
+    output_path="$input_dir"
+  fi
+  output_path="${output_path%\/}"
+
+  if [ "$output_path_ready" == false ]; then
+    # 如果是 .m3u8 文件且 keep_m3u8=false，则更改为 .mp4
+    if [[ "$extension" == "m3u8" && "$keep_m3u8" == false ]]; then
+      output_path="$output_path/${filename%.*}.low.mp4"
+    else
+      output_path="$output_path/${filename%.*}.low.$extension"
+    fi
+  fi
+  output_path=$(realpath "$output_path")
 
   echo -ne "\033]0;Converting $input_path...\007"
 
@@ -155,6 +181,7 @@ use_gpu=false
 bitrate="1.5M"
 output_dir=""
 resize=""
+keep_m3u8=false # 新增的变量
 
 # 解析命令行参数
 while getopts ":h-:" opt; do
@@ -171,6 +198,9 @@ while getopts ":h-:" opt; do
     resize)
       resize=$OPTARG
       ;;
+    keep-m3u8)
+      keep_m3u8=$OPTARG
+      ;;
     h)
       show_help
       exit 0
@@ -186,6 +216,9 @@ while getopts ":h-:" opt; do
         OPTIND=$((OPTIND + 1))
       elif [[ $OPTARG == "resize" ]]; then
         resize=${!OPTIND}
+        OPTIND=$((OPTIND + 1))
+      elif [[ $OPTARG == "keep-m3u8" ]]; then
+        keep_m3u8=${!OPTIND}
         OPTIND=$((OPTIND + 1))
       fi
       ;;
