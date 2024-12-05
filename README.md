@@ -1,1 +1,1 @@
-# awesome
+# WheelJS Awesome
