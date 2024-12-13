@@ -2,10 +2,12 @@ import { createSignal } from "solid-js";
 import logo from "./assets/logo.svg";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
+import DnDDemo from './DndDemo';
 
 function App() {
   const [greetMsg, setGreetMsg] = createSignal("");
   const [name, setName] = createSignal("");
+  const [renderDnd, setRenderDnd] = createSignal(false);
 
   async function greet() {
     // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -41,6 +43,8 @@ function App() {
           onChange={(e) => setName(e.currentTarget.value)}
           placeholder="Enter a name..."
         />
+        <input type="checkbox" onChange={() => setRenderDnd(!renderDnd())} />
+        { renderDnd() && <DnDDemo />}
         <button type="submit">Greet</button>
       </form>
       <p>{greetMsg()}</p>
