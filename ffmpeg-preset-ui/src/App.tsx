@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js";
 import logo from "./assets/logo.svg";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke, Channel } from "@tauri-apps/api/core";
 import "./App.css";
 import DnDDemo from './DndDemo';
 
@@ -12,6 +12,21 @@ function App() {
   async function greet() {
     // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
     setGreetMsg(await invoke("greet", { name: name() }));
+  }
+
+  function handleExecute() {
+    const onEvent = new Channel();
+    onEvent.onmessage = (message: any) => {
+      console.log(`download event (${message.event})`, message.data);
+    };
+    const result = invoke('test_execute', {
+      onEvent,
+    });
+    result.then((...args) => {
+      console.log('fulfilled', ...args);
+    }, (err) => {
+      console.error('rejected', err);
+    });
   }
 
   return (
@@ -46,6 +61,7 @@ function App() {
         <input type="checkbox" onChange={() => setRenderDnd(!renderDnd())} />
         { renderDnd() && <DnDDemo />}
         <button type="submit">Greet</button>
+        <button type="button" onClick={handleExecute}>Execute!</button>
       </form>
       <p>{greetMsg()}</p>
     </main>
