@@ -95,6 +95,14 @@ pub fn run() {
     Builder::default()
         .plugin(tauri_plugin_shell::init())
         .manage(RunningTasks::default())
+        .setup(move |app| {
+            #[cfg(debug_assertions)]
+            if let Some(webview) = app.get_webview_window("main") {
+                webview.open_devtools();
+            }
+
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![start_parse])
         .on_window_event(|window, event| match event {
             WindowEvent::CloseRequested { api, .. } => {
