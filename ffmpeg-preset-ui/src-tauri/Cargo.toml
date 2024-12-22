@@ -19,6 +19,7 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 base64 = { version = "0.21", features = ["std"] }
+chrono = "0.4"
 once_cell = "^1.17"
 regex = "1"
 tauri = { version = "2", features = [] }

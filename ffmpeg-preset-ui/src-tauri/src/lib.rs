@@ -6,12 +6,14 @@ mod parser;
 use parser::{ParseOptions, ParseCommand, ParseEvent};
 
 pub mod utils;
-use utils::generate_uuid;
+use utils::{generate_uuid, try_duration_line, try_percent_line};
 
 pub struct ParseTask {
     id: String,
     pid: u32,
     command: ParseCommand,
+    duration: u64,
+    percent: u8,
 }
 
 pub type RunningTasks = Arc<Mutex<Vec<ParseTask>>>;
@@ -43,6 +45,8 @@ async fn start_parse(
             id: id.clone(),
             pid,
             command: parse_command,
+            duration: 0,
+            percent: 0,
         });
     }
 
@@ -63,6 +67,43 @@ async fn start_parse(
             }
             CommandEvent::Stderr(line) => {
                 let line_str = String::from_utf8_lossy(&line);
+                if let Some(total_duration) = try_duration_line(&line_str) {
+                    {
+                        let mut running_tasks = running_tasks_state.lock().unwrap();
+                        if let Some(task) = running_tasks.iter_mut().find(|t| t.id == id) {
+                            task.duration = total_duration;
+                        }
+                    }
+                }
+
+                if let Some(current_duration) = try_percent_line(&line_str) {
+                    let total_duration = {
+                        let running_tasks = running_tasks_state.lock().unwrap();
+                        running_tasks
+                            .iter()
+                            .find(|t| t.id == id)
+                            .map(|t| t.duration)
+                            .unwrap_or(0)
+                    };
+
+                    if total_duration > 0 {
+                        let percent =
+                            (current_duration as f64 / total_duration as f64 * 100.0).round() as u8;
+                        let percent = percent.min(100);
+
+                        {
+                            let mut running_tasks = running_tasks_state.lock().unwrap();
+                            if let Some(task) = running_tasks.iter_mut().find(|t| t.id == id) {
+                                task.percent = percent;
+                            }
+                        }
+
+                        channel
+                            .send(ParseEvent::PercentProgress { id: &id, percent })
+                            .map_err(|e| e.to_string())?;
+                    }
+                }
+
                 channel
                     .send(ParseEvent::Progress {
                         id: &id,

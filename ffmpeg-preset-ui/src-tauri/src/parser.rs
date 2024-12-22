@@ -105,6 +105,8 @@ pub enum ParseEvent<'a> {
         content: &'a str,
     },
     #[serde(rename_all = "camelCase")]
+    PercentProgress { id: &'a str, percent: u8 },
+    #[serde(rename_all = "camelCase")]
     Finished { id: &'a str, success: bool },
 }
 
