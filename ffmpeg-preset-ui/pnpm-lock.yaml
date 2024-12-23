@@ -8,12 +8,27 @@ dependencies:
   98.css:
     specifier: github:jdan/98.css
     version: git/github.com+jdan/98.css/dc3b4488d6291068d3f45734ee1564bab6f55ed1
+  '@fortawesome/free-regular-svg-icons':
+    specifier: ^6.7.2
+    version: 6.7.2
+  '@fortawesome/free-solid-svg-icons':
+    specifier: ^6.7.2
+    version: 6.7.2
   '@tauri-apps/api':
     specifier: ^2
     version: 2.1.1
+  '@tauri-apps/plugin-dialog':
+    specifier: ^2.2.0
+    version: 2.2.0
   '@tauri-apps/plugin-shell':
     specifier: ^2
     version: 2.0.1
+  lodash-es:
+    specifier: ^4.17.21
+    version: 4.17.21
+  solid-fa:
+    specifier: ^0.2.0
+    version: 0.2.0(solid-js@1.9.3)
   solid-js:
     specifier: ^1.7.8
     version: 1.9.3
@@ -22,6 +37,9 @@ devDependencies:
   '@tauri-apps/cli':
     specifier: ^2
     version: 2.1.0
+  '@types/lodash-es':
+    specifier: ^4.17.12
+    version: 4.17.12
   sass:
     specifier: ^1.83.0
     version: 1.83.0
@@ -419,6 +437,25 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /@fortawesome/fontawesome-common-types@6.7.2:
+    resolution: {integrity: sha512-Zs+YeHUC5fkt7Mg1l6XTniei3k4bwG/yo3iFUtZWd/pMx9g3fdvkSK9E0FOC+++phXOka78uJcYb8JaFkW52Xg==}
+    engines: {node: '>=6'}
+    dev: false
+
+  /@fortawesome/free-regular-svg-icons@6.7.2:
+    resolution: {integrity: sha512-7Z/ur0gvCMW8G93dXIQOkQqHo2M5HLhYrRVC0//fakJXxcF1VmMPsxnG6Ee8qEylA8b8Q3peQXWMNZ62lYF28g==}
+    engines: {node: '>=6'}
+    dependencies:
+      '@fortawesome/fontawesome-common-types': 6.7.2
+    dev: false
+
+  /@fortawesome/free-solid-svg-icons@6.7.2:
+    resolution: {integrity: sha512-GsBrnOzU8uj0LECDfD5zomZJIjrPhIlWU82AHwa2s40FKH+kcxQaBvBo3Z4TxyZHIyX8XTDxsyA33/Vx9eFuQA==}
+    engines: {node: '>=6'}
+    dependencies:
+      '@fortawesome/fontawesome-common-types': 6.7.2
+    dev: false
 
   /@jridgewell/gen-mapping@0.3.5:
     resolution: {integrity: sha512-IzL8ZoEDIBRWEzlCcRhOaCupYyN5gdIK+Q6fbFdPDg6HqX6jpkItn7DFIpW9LQzXG6Df9sA7+OKnq0qlz/GaQg==}
@@ -856,6 +893,12 @@ packages:
       '@tauri-apps/cli-win32-x64-msvc': 2.1.0
     dev: true
 
+  /@tauri-apps/plugin-dialog@2.2.0:
+    resolution: {integrity: sha512-6bLkYK68zyK31418AK5fNccCdVuRnNpbxquCl8IqgFByOgWFivbiIlvb79wpSXi0O+8k8RCSsIpOquebusRVSg==}
+    dependencies:
+      '@tauri-apps/api': 2.1.1
+    dev: false
+
   /@tauri-apps/plugin-shell@2.0.1:
     resolution: {integrity: sha512-akU1b77sw3qHiynrK0s930y8zKmcdrSD60htjH+mFZqv5WaakZA/XxHR3/sF1nNv9Mgmt/Shls37HwnOr00aSw==}
     dependencies:
@@ -893,6 +936,16 @@ packages:
 
   /@types/estree@1.0.6:
     resolution: {integrity: sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw==}
+    dev: true
+
+  /@types/lodash-es@4.17.12:
+    resolution: {integrity: sha512-0NgftHUcV4v34VhXm8QBSftKVXtbkBG3ViCjs6+eJ5a6y6Mi/jiFGPc1sC7QK+9BFhWrURE3EOggmWaSxL9OzQ==}
+    dependencies:
+      '@types/lodash': 4.17.13
+    dev: true
+
+  /@types/lodash@4.17.13:
+    resolution: {integrity: sha512-lfx+dftrEZcdBPczf9d0Qv0x+j/rfNCMuC6OcfXmO8gkfeNAY88PgKUbvG56whcN23gc27yenwF6oJZXGFpYxg==}
     dev: true
 
   /babel-plugin-jsx-dom-expressions@0.39.3(@babel/core@7.26.0):
@@ -1100,6 +1153,10 @@ packages:
     hasBin: true
     dev: true
 
+  /lodash-es@4.17.21:
+    resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==}
+    dev: false
+
   /lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
     dependencies:
@@ -1231,6 +1288,14 @@ packages:
   /seroval@1.1.1:
     resolution: {integrity: sha512-rqEO6FZk8mv7Hyv4UCj3FD3b6Waqft605TLfsCe/BiaylRpyyMC0b+uA5TJKawX3KzMrdi3wsLbCaLplrQmBvQ==}
     engines: {node: '>=10'}
+
+  /solid-fa@0.2.0(solid-js@1.9.3):
+    resolution: {integrity: sha512-Mi8aOKZ+GJ2VgchwlV3SVrQPwpcDh1kuXdMCbQ0AlxBI9W36FaxTMOUrZenU6Ua/p04EcRfHLT4AfOx7xJSF3Q==}
+    peerDependencies:
+      solid-js: ^1.0.0
+    dependencies:
+      solid-js: 1.9.3
+    dev: false
 
   /solid-js@1.9.3:
     resolution: {integrity: sha512-5ba3taPoZGt9GY3YlsCB24kCg0Lv/rie/HTD4kG6h4daZZz7+yK02xn8Vx8dLYBc9i6Ps5JwAbEiqjmKaLB3Ag==}
