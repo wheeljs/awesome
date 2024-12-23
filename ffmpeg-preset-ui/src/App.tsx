@@ -2,7 +2,7 @@ import './App.scss';
 
 function App() {
   return (
-    <main class="container">
+    <main class="container win-98">
     </main>
   );
 }
