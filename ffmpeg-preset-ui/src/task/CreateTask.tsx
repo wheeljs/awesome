@@ -1,6 +1,7 @@
-import { For, useContext, createEffect } from 'solid-js';
+import { For, Show, useContext, createEffect } from 'solid-js';
 import { createStore, produce, unwrap } from 'solid-js/store';
 import { Fa } from 'solid-fa';
+import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { faCircleQuestion } from '@fortawesome/free-regular-svg-icons';
 import { uniqBy } from 'lodash-es';
 
@@ -43,6 +44,17 @@ export function CreateTask(props: CreateTaskProps) {
     setNewTask('files', index, produce((draft) => {
       draft[key] = value;
     }));
+  };
+
+  const handleAddFileRow = () => {
+    setNewTask('files', (draft) => [
+      ...draft,
+      { source: '', target: '' },
+    ]);
+  };
+
+  const handleDeleteFileRow = (index: number) => {
+    setNewTask('files', (draft) => draft.filter((_, idx) => idx !== index));
   };
 
   const handleChooseFile = (index: number, result: string | string[] | null) => {
@@ -164,6 +176,7 @@ export function CreateTask(props: CreateTaskProps) {
           <table>
             <thead>
               <tr>
+                <th class="create-task-form__files__operation-column"></th>
                 <th>Source</th>
                 <th title="If you:
 Leave it blank: Target will be close to Source but ends with &quot;.low.{extension}&quot;
@@ -175,6 +188,11 @@ Choose a directory and fill file name: Target will be destinate to choosed direc
               <For each={newTask.files}>
                 {(item, index) => {
                   return (<tr>
+                    <td class="create-task-form__files__operation-column"><Show when={newTask.files.length > 1}><button
+                      type="button"
+                      class="only-icon"
+                      onClick={() => handleDeleteFileRow(index())}
+                    ><Fa icon={faXmark} /></button></Show></td>
                     <td><BrowseInput
                       type="text"
                       value={item.source}
@@ -198,6 +216,13 @@ Choose a directory and fill file name: Target will be destinate to choosed direc
                 }}
               </For>
             </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2">
+                  <button type="button" onClick={handleAddFileRow}>Add</button>
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
         <button type="submit">Parse</button>

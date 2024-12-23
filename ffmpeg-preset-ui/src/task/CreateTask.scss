@@ -42,8 +42,12 @@
       width: 100%;
     }
 
-    thead tr th {
-      width: 50%;
+    & &__operation-column {
+      width: 32px;
+
+      button {
+        min-height: 21px;
+      }
     }
 
     tbody td {
