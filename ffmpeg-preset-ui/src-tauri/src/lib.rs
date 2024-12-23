@@ -5,6 +5,7 @@ use tauri::{
     window::{ProgressBarState, ProgressBarStatus},
     AppHandle, Builder, Manager, State, UserAttentionType, WebviewWindow, WindowEvent,
 };
+use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
 use tauri_plugin_shell::{ShellExt, process::CommandEvent};
 
 mod parser;
@@ -172,6 +173,18 @@ pub fn run() {
                     Ok(running_tasks) => {
                         if !running_tasks.is_empty() {
                             let window_ = window.clone();
+                            let user_result = window.dialog()
+                                .message("You have running parsing task, close application will stop parsing and leave target file in middle state. Are you sure to TERMINATE parsing and exit?")
+                                .title("Confirm")
+                                .buttons(MessageDialogButtons::OkCancelCustom(
+                                    String::from("Terminate and Exit"),
+                                    String::from("Cancel")
+                                ))
+                                .blocking_show();
+
+                            if !user_result {
+                                return api.prevent_close();
+                            }
                             let result = async_runtime::block_on(async move {
                                 utils::kill_tasks(window_, running_tasks).await
                             });
