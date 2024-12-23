@@ -87,10 +87,7 @@ fn time_str_to_milliseconds(time_str: &str, format: Option<&str>) -> ParseResult
 
     let time = NaiveTime::parse_from_str(time_str, fmt)?;
 
-    Ok(
-        time.num_seconds_from_midnight() as u64 * 1000
-            + (time.nanosecond() / 100_0000) as u64,
-    )
+    Ok(time.num_seconds_from_midnight() as u64 * 1000 + (time.nanosecond() / 100_0000) as u64)
 }
 
 pub fn try_duration_line(line: &str) -> Option<u64> {
@@ -104,7 +101,8 @@ pub fn try_duration_line(line: &str) -> Option<u64> {
     time_str_to_milliseconds(duration_str, None).ok()
 }
 
-static PERCENTAGE_LINE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"time=(.*)\sbitrate=").unwrap());
+static PERCENTAGE_LINE_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"time=(.*)\sbitrate=").unwrap());
 
 pub fn try_percent_line(line: &str) -> Option<u64> {
     if !PERCENTAGE_LINE_REGEX.is_match(line) {

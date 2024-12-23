@@ -1,5 +1,10 @@
 use std::sync::{Arc, Mutex};
-use tauri::{async_runtime, ipc::Channel, AppHandle, Builder, Manager, State, WindowEvent};
+use tauri::{
+    async_runtime,
+    ipc::Channel,
+    window::{ProgressBarState, ProgressBarStatus},
+    AppHandle, Builder, Manager, State, UserAttentionType, WebviewWindow, WindowEvent,
+};
 use tauri_plugin_shell::{ShellExt, process::CommandEvent};
 
 mod parser;
@@ -21,6 +26,7 @@ pub type RunningTasks = Arc<Mutex<Vec<ParseTask>>>;
 #[tauri::command(rename_all = "snake_case")]
 async fn start_parse(
     app_handle: AppHandle,
+    webview_window: WebviewWindow,
     running_tasks_state: State<'_, RunningTasks>,
     options: ParseOptions,
     channel: Channel<ParseEvent<'_>>,
@@ -55,6 +61,10 @@ async fn start_parse(
         .map_err(|e| e.to_string())?;
 
     while let Some(event) = rx.recv().await {
+        webview_window.set_progress_bar(ProgressBarState {
+            status: Some(ProgressBarStatus::Normal),
+            progress: Some(0),
+        });
         match event {
             CommandEvent::Stdout(line) => {
                 channel
@@ -98,6 +108,10 @@ async fn start_parse(
                             }
                         }
 
+                        webview_window.set_progress_bar(ProgressBarState {
+                            status: None,
+                            progress: Some(percent as u64),
+                        });
                         channel
                             .send(ParseEvent::PercentProgress { id: &id, percent })
                             .map_err(|e| e.to_string())?;
@@ -117,6 +131,11 @@ async fn start_parse(
                     let mut running_tasks = running_tasks_state.lock().unwrap();
                     running_tasks.retain(|x| x.id != id.clone());
                 }
+                webview_window.request_user_attention(Some(UserAttentionType::Informational));
+                webview_window.set_progress_bar(ProgressBarState {
+                    status: Some(ProgressBarStatus::None),
+                    progress: None,
+                });
                 channel
                     .send(ParseEvent::Finished {
                         id: &id,
