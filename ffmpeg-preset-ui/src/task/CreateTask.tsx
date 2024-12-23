@@ -1,10 +1,11 @@
-import { For } from 'solid-js';
+import { For, useContext, createEffect } from 'solid-js';
 import { createStore, produce, unwrap } from 'solid-js/store';
 import { Fa } from 'solid-fa';
 import { faCircleQuestion } from '@fortawesome/free-regular-svg-icons';
 import { uniqBy } from 'lodash-es';
 
 import type { Task, TaskFile } from './types';
+import { TaskContext } from './context';
 import { BrowseInput } from '../components/BrowseInput';
 import { TargetInput } from './components/TargetInput';
 import './CreateTask.scss';
@@ -77,6 +78,15 @@ export function CreateTask(props: CreateTaskProps) {
 
     props.onCreate?.(createdTask);
   };
+
+  const context = useContext(TaskContext);
+  createEffect(() => {
+    if (context.parseFinishedSignal() > 0) {
+      setNewTask('files', [
+        { source: '', target: ''},
+      ]);
+    }
+  });
 
   return (
     <form class="create-task-form" onSubmit={handleSubmit}>
