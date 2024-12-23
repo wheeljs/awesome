@@ -40,6 +40,7 @@ export function TargetInput(props: TargetInputProps) {
       fileBrowseProps={{
         title: 'Choose target file folder',
         directory: true,
+        defaultPath: props.value as string,
         button: {
           mode: 'icon',
         },
