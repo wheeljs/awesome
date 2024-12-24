@@ -13,6 +13,10 @@ export type Task = {
   files: TaskFile[];
 };
 
+export type CompletedTask = Task & {
+  id: string;
+};
+
 interface TaskEventMap {
   'started': {
     id: string;
