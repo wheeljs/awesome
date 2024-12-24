@@ -29,7 +29,7 @@ impl ParseCommand {
     }
 }
 
-static NORMALIZE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"([ ()])").unwrap());
+static NORMALIZE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"([ ()&])").unwrap());
 
 fn normalize_unix_path(path: &str) -> String {
     NORMALIZE_REGEX.replace_all(path, r"\$1").to_string()
@@ -173,7 +173,7 @@ mod tests {
     }
 
     #[test]
-    fn it_works_with_files_with_spaces() {
+    fn it_works_with_files_with_escape_characters() {
         let command = ParseCommand::build(ParseOptions {
             command: String::from("/usr/bin/bash"),
             bash_file: String::from("/path/to/ffmpeg/bin/low-video.bash"),
@@ -183,32 +183,16 @@ mod tests {
             files: vec![
                 (String::from("/path/with/a space/video1.mp4"), None),
                 (String::from("C:\\path\\with\\a space\\video2.mp4"), None),
+                (String::from("/path/to/video(3).mp4"), None),
+                (String::from("C:\\path\\to\\video(4).mp4"), None),
+                (String::from("/path/to/video5.mp4"), Some(String::from("/targ&et/video5.mp4"))),
+                (String::from("C:\\path\\to\\video6.mp4"), Some(String::from("C:\\targ&et\\video6.mp4"))),
             ],
         });
 
         assert_eq!(
             command.args_str(),
-            "cd /path/to/ffmpeg/bin && low-video.bash /path/with/a\\ space/video1.mp4 /c/path/with/a\\ space/video2.mp4"
-        );
-    }
-
-    #[test]
-    fn it_works_with_files_with_parentheses() {
-        let command = ParseCommand::build(ParseOptions {
-            command: String::from("/usr/bin/bash"),
-            bash_file: String::from("/path/to/ffmpeg/bin/low-video.bash"),
-            gpu: false,
-            resize: None,
-            bitrate: None,
-            files: vec![
-                (String::from("/path/to/video(1).mp4"), None),
-                (String::from("C:\\path\\to\\video(2).mp4"), None),
-            ],
-        });
-
-        assert_eq!(
-            command.args_str(),
-            "cd /path/to/ffmpeg/bin && low-video.bash /path/to/video\\(1\\).mp4 /c/path/to/video\\(2\\).mp4"
+            "cd /path/to/ffmpeg/bin && low-video.bash /path/with/a\\ space/video1.mp4 /c/path/with/a\\ space/video2.mp4 /path/to/video\\(3\\).mp4 /c/path/to/video\\(4\\).mp4 /path/to/video5.mp4:/targ\\&et/video5.mp4 /c/path/to/video6.mp4:/c/targ\\&et/video6.mp4"
         );
     }
 
