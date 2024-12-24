@@ -4,7 +4,7 @@ import { type UnlistenFn } from '@tauri-apps/api/event';
 import { Fa } from 'solid-fa';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { faCircleQuestion } from '@fortawesome/free-regular-svg-icons';
-import { uniqBy, groupBy } from 'lodash-es';
+import { uniqBy, groupBy, cloneDeep } from 'lodash-es';
 
 import { tauriDragAndDrop } from '../reusables/dragAndDrop';
 import type { Task, TaskFile } from './types';
@@ -113,7 +113,7 @@ export function CreateTask(props: CreateTaskProps) {
       setNewTask('files', (draft) => draft.filter(validateFileItem));
     }
 
-    const createdTask: Task = unwrap(newTask);
+    const createdTask: Task = cloneDeep(unwrap(newTask));
     if (!createdTask.useResize) {
       delete createdTask.resize;
     }
