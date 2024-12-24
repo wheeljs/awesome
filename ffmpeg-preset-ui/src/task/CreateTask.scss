@@ -44,6 +44,7 @@
 
     & &__operation-column {
       width: 32px;
+      box-sizing: border-box;
 
       button {
         min-height: 21px;
