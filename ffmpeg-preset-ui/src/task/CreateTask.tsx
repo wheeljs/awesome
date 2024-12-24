@@ -1,10 +1,12 @@
-import { For, Show, useContext, createEffect } from 'solid-js';
+import { For, Show, useContext, createEffect, onCleanup } from 'solid-js';
 import { createStore, produce, unwrap } from 'solid-js/store';
+import { type UnlistenFn } from '@tauri-apps/api/event';
 import { Fa } from 'solid-fa';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { faCircleQuestion } from '@fortawesome/free-regular-svg-icons';
 import { uniqBy, groupBy } from 'lodash-es';
 
+import { tauriDragAndDrop } from '../reusables/dragAndDrop';
 import type { Task, TaskFile } from './types';
 import { TaskContext } from './context';
 import { BrowseInput } from '../components/BrowseInput';
@@ -82,6 +84,22 @@ export function CreateTask(props: CreateTaskProps) {
       });
     }
   };
+
+  let unlisten: UnlistenFn;
+  tauriDragAndDrop({
+    onDrop: (event) => {
+      setNewTask('files', (draft) => uniqBy([
+        ...draft,
+        ...event.paths.map((x) => ({
+          source: x,
+        })),
+      ], 'source'));
+    },
+  }).then((fn) => unlisten = fn);
+
+  onCleanup(() => {
+    unlisten?.();
+  });
 
   const handleSubmit = async (event: SubmitEvent) => {
     event.preventDefault();
