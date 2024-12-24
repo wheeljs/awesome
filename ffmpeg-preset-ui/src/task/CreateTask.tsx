@@ -8,7 +8,7 @@ import { uniqBy, groupBy } from 'lodash-es';
 
 import { tauriDragAndDrop } from '../reusables/dragAndDrop';
 import type { Task, TaskFile } from './types';
-import { TaskContext } from './context';
+import { TaskContext, TaskFileContext } from './context';
 import { BrowseInput } from '../components/BrowseInput';
 import { TargetInput } from './components/TargetInput';
 import './CreateTask.scss';
@@ -130,6 +130,17 @@ export function CreateTask(props: CreateTaskProps) {
     }
   });
 
+  const taskFileContext = {
+    getAboveTarget: (index: number) => {
+      const aboveFileItem = newTask.files[index - 1];
+      if (!aboveFileItem) {
+        return '';
+      }
+
+      return aboveFileItem.target ?? '';
+    },
+  };
+
   const hasValidFile = () => newTask.files.filter(validateFileItem).length > 0;
 
   return (
@@ -204,59 +215,62 @@ export function CreateTask(props: CreateTaskProps) {
             />
           </div>
         </div>
-        <div class="sunken-panel create-task-form__files">
-          <table>
-            <thead>
-              <tr>
-                <th class="create-task-form__files__operation-column"></th>
-                <th>Source</th>
-                <th title="If you:
+        <TaskFileContext.Provider value={taskFileContext}>
+          <div class="sunken-panel create-task-form__files">
+            <table>
+              <thead>
+                <tr>
+                  <th class="create-task-form__files__operation-column"></th>
+                  <th>Source</th>
+                  <th title="If you:
 Leave it blank: Target will be close to Source but ends with &quot;.low.{extension}&quot;
 Choose a directory: Target will be destinate to choosed directory with &quot;.low.{extension}&quot;
 Choose a directory and fill file name: Target will be destinate to choosed directory with your specified name">Target(Optional)<Fa icon={faCircleQuestion} /></th>
-              </tr>
-            </thead>
-            <tbody>
-              <For each={newTask.files}>
-                {(item, index) => {
-                  return (<tr>
-                    <td class="create-task-form__files__operation-column"><Show when={newTask.files.length > 1}><button
-                      type="button"
-                      class="only-icon"
-                      onClick={() => handleDeleteFileRow(index())}
-                    ><Fa icon={faXmark} /></button></Show></td>
-                    <td><BrowseInput
-                      type="text"
-                      value={item.source}
-                      fileBrowseProps={{
-                        title: 'Choose video(s)',
-                        multiple: true,
-                        button: {
-                          mode: 'icon',
-                        },
-                      }}
-                      onChooseFile={(e) => handleChooseFile(index(), e)}
-                      onChange={(value) => updateFile(index(), 'source', value)}
-                    /></td>
-                    <td><TargetInput
-                      source={item.source}
-                      type="text"
-                      value={item.target}
-                      onChange={(value) => updateFile(index(), 'target', value)}
-                    /></td>
-                  </tr>);
-                }}
-              </For>
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colspan="2">
-                  <button type="button" onClick={handleAddFileRow}>Add</button>
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
+                </tr>
+              </thead>
+              <tbody>
+                <For each={newTask.files}>
+                  {(item, index) => {
+                    return (<tr>
+                      <td class="create-task-form__files__operation-column"><Show when={newTask.files.length > 1}><button
+                        type="button"
+                        class="only-icon"
+                        onClick={() => handleDeleteFileRow(index())}
+                      ><Fa icon={faXmark} /></button></Show></td>
+                      <td><BrowseInput
+                        type="text"
+                        value={item.source}
+                        fileBrowseProps={{
+                          title: 'Choose video(s)',
+                          multiple: true,
+                          button: {
+                            mode: 'icon',
+                          },
+                        }}
+                        onChooseFile={(e) => handleChooseFile(index(), e)}
+                        onChange={(value) => updateFile(index(), 'source', value)}
+                      /></td>
+                      <td><TargetInput
+                        index={index()}
+                        source={item.source}
+                        type="text"
+                        value={item.target}
+                        onChange={(value) => updateFile(index(), 'target', value)}
+                      /></td>
+                    </tr>);
+                  }}
+                </For>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="2">
+                    <button type="button" onClick={handleAddFileRow}>Add</button>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </TaskFileContext.Provider>
         <button type="submit" disabled={!hasValidFile()}>Parse</button>
       </fieldset>
     </form>

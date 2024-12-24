@@ -1,13 +1,15 @@
-import { type JSX } from 'solid-js';
+import { Show, useContext, type JSX } from 'solid-js';
 import { Fa } from 'solid-fa';
-import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
+import { faRightFromBracket, faArrowTurnDown } from '@fortawesome/free-solid-svg-icons';
 
+import { TaskFileContext } from '../context';
 import { BrowseInput } from '../../components/BrowseInput';
 
 import './TargetInput.scss';
 
 export interface TargetInputProps extends Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
   source: string;
+  index: number;
   onChange: (value: string) => void;
 }
 
@@ -35,6 +37,11 @@ export function TargetInput(props: TargetInputProps) {
     handleChange(target);
   };
 
+  const taskFileContext = useContext(TaskFileContext);
+  const handleFromAbove = () => {
+    handleChange(taskFileContext.getAboveTarget(props.index));
+  };
+
   return (
     <BrowseInput
       fileBrowseProps={{
@@ -48,12 +55,22 @@ export function TargetInput(props: TargetInputProps) {
       {...props}
       value={props.value}
       renderSuffix={() => (
-        <button
-          type="button"
-          title="Copy from source"
-          class="only-icon"
-          onClick={handleFromSource}
-        ><Fa icon={faRightFromBracket} /></button>
+        <>
+          <button
+            type="button"
+            title="Copy from source"
+            class="only-icon"
+            onClick={handleFromSource}
+          ><Fa icon={faRightFromBracket} /></button>
+          <Show when={props.index > 0}>
+            <button
+              type="button"
+              title="Copy from above target"
+              class="only-icon"
+              onClick={handleFromAbove}
+            ><Fa icon={faArrowTurnDown} /></button>
+          </Show>
+        </>
       )}
       onChange={handleChange}
       onChooseFile={handleChooseFile}
