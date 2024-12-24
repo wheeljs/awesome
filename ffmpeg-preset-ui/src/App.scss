@@ -1,4 +1,9 @@
+@import 'normalize.css';
 @import '98.css';
+
+body {
+  padding: 10px;
+}
 
 .win-98 {
   &,

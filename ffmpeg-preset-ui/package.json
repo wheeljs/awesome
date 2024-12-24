@@ -20,6 +20,7 @@
     "@tauri-apps/plugin-dialog": "^2.2.0",
     "@tauri-apps/plugin-shell": "^2",
     "lodash-es": "^4.17.21",
+    "normalize.css": "^8.0.1",
     "solid-fa": "^0.2.0",
     "solid-js": "^1.7.8"
   },
