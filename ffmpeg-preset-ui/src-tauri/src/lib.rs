@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 use tauri::{
     async_runtime,
     ipc::Channel,
@@ -22,7 +22,7 @@ pub struct ParseTask {
     percent: u8,
 }
 
-pub type RunningTasks = Arc<Mutex<Vec<ParseTask>>>;
+pub type RunningTasks = Mutex<Vec<ParseTask>>;
 
 #[tauri::command(rename_all = "snake_case")]
 async fn start_parse(
