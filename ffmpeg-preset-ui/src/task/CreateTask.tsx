@@ -3,7 +3,7 @@ import { createStore, produce, unwrap } from 'solid-js/store';
 import { Fa } from 'solid-fa';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { faCircleQuestion } from '@fortawesome/free-regular-svg-icons';
-import { uniqBy } from 'lodash-es';
+import { uniqBy, groupBy } from 'lodash-es';
 
 import type { Task, TaskFile } from './types';
 import { TaskContext } from './context';
@@ -15,6 +15,8 @@ export type CreateTaskProps = {
   loading?: boolean;
   onCreate: (createTask: Task) => void;
 };
+
+const validateFileItem = (file: TaskFile) => file.source?.length > 0;
 
 export function CreateTask(props: CreateTaskProps) {
   const IdPrefix = 'create-task-';
@@ -72,7 +74,7 @@ export function CreateTask(props: CreateTaskProps) {
           [
             ...draft,
             ...result.map((x) => ({ source: x })),
-          ].filter(x => x.source),
+          ].filter(validateFileItem),
           'source',
         );
 
@@ -83,6 +85,16 @@ export function CreateTask(props: CreateTaskProps) {
 
   const handleSubmit = async (event: SubmitEvent) => {
     event.preventDefault();
+
+    const groupedFiles = groupBy(newTask.files, (x) => validateFileItem(x) ? 'valid' : 'invalid');
+    if (!groupedFiles.valid?.length) {
+      return;
+    }
+
+    if (groupedFiles.invalid?.length > 0) {
+      setNewTask('files', (draft) => draft.filter(validateFileItem));
+    }
+
     const createdTask: Task = unwrap(newTask);
     if (!createdTask.useResize) {
       delete createdTask.resize;
@@ -99,6 +111,8 @@ export function CreateTask(props: CreateTaskProps) {
       ]);
     }
   });
+
+  const hasValidFile = () => newTask.files.filter(validateFileItem).length > 0;
 
   return (
     <form class="create-task-form" onSubmit={handleSubmit}>
@@ -225,7 +239,7 @@ Choose a directory and fill file name: Target will be destinate to choosed direc
             </tfoot>
           </table>
         </div>
-        <button type="submit">Parse</button>
+        <button type="submit" disabled={!hasValidFile()}>Parse</button>
       </fieldset>
     </form>
   );
