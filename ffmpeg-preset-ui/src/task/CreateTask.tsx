@@ -1,4 +1,4 @@
-import { For, Show, useContext, createEffect, onCleanup } from 'solid-js';
+import { For, Show, useContext, createEffect, onMount, onCleanup } from 'solid-js';
 import { createStore, produce, unwrap } from 'solid-js/store';
 import { type UnlistenFn } from '@tauri-apps/api/event';
 import { Fa } from 'solid-fa';
@@ -9,6 +9,7 @@ import { uniqBy, groupBy, cloneDeep } from 'lodash-es';
 import { tauriDragAndDrop } from '../reusables/dragAndDrop';
 import type { Task, TaskFile } from './types';
 import { TaskContext, TaskFileContext } from './context';
+import { loadLatestTaskConfig, saveLatestTaskConfig } from './service';
 import { BrowseInput } from '../components/BrowseInput';
 import { TargetInput } from './components/TargetInput';
 import './CreateTask.scss';
@@ -28,12 +29,22 @@ export function CreateTask(props: CreateTaskProps) {
     command: '',
     bashFile: '',
     gpu: true,
-    useResize: true,
+    useResize: false,
     resize: '',
     bitrate: '1.5M',
     files: [
       { source: '', target: ''},
     ],
+  });
+
+  onMount(async () => {
+    const config = await loadLatestTaskConfig();
+    if (config) {
+      setNewTask((draft) => ({
+        ...draft,
+        ...config,
+      }));
+    }
   });
 
   const updator = <K extends keyof Task>(key: K, value: Task[K]) => {
@@ -118,6 +129,7 @@ export function CreateTask(props: CreateTaskProps) {
       delete createdTask.resize;
     }
 
+    saveLatestTaskConfig(createdTask);
     props.onCreate?.(createdTask);
   };
 
