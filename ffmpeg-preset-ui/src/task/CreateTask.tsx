@@ -112,7 +112,7 @@ export function CreateTask(props: CreateTaskProps) {
     unlisten?.();
   });
 
-  const handleSubmit = async (event: SubmitEvent) => {
+  const handleSubmit = (event: SubmitEvent) => {
     event.preventDefault();
 
     const groupedFiles = groupBy(newTask.files, (x) => validateFileItem(x) ? 'valid' : 'invalid');
