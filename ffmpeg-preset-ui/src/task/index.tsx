@@ -68,7 +68,7 @@ function TaskComponent() {
         </For>
       </div>
     </TaskContext.Provider>
-  )
+  );
 }
 
 export { TaskComponent as Task };
