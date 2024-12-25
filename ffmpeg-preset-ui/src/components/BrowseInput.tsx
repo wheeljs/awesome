@@ -1,6 +1,5 @@
-import { type JSX } from 'solid-js';
+import { splitProps, type JSX } from 'solid-js';
 import { Fa } from 'solid-fa';
-import { omit } from 'lodash-es';
 import { faFolderOpen } from '@fortawesome/free-regular-svg-icons';
 import { open, type OpenDialogOptions } from '@tauri-apps/plugin-dialog';
 
@@ -42,7 +41,7 @@ function renderFileBrowseButton(props: BrowseFileButtonProps & BrowseFileButtonR
 }
 
 export function BrowseInput(props: BrowseInputProps) {
-  const inputProps = omit(props, 'fileBrowseProps', 'renderSuffix', 'onChange', 'onChooseFile');
+  const [_, inputProps] = splitProps(props, ['fileBrowseProps', 'renderSuffix', 'onChange', 'onChooseFile'])
   let input!: HTMLInputElement;
 
   const handleChange: JSX.ChangeEventHandler<HTMLInputElement, Event> = (event) => {

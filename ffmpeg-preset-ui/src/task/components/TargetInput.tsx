@@ -1,4 +1,4 @@
-import { Show, useContext, type JSX } from 'solid-js';
+import { Show, useContext, splitProps, type JSX } from 'solid-js';
 import { Fa } from 'solid-fa';
 import { faRightFromBracket, faArrowTurnDown } from '@fortawesome/free-solid-svg-icons';
 
@@ -16,6 +16,8 @@ export interface TargetInputProps extends Omit<JSX.InputHTMLAttributes<HTMLInput
 const STRIP_FILENAME_REGEX = /^(.*[\/\\]).*/;
 
 export function TargetInput(props: TargetInputProps) {
+  const [_, inputProps] = splitProps(props, ['index', 'source', 'onChange']);
+
   const handleChange = (value: string) => {
     props.onChange(value);
   };
@@ -52,7 +54,7 @@ export function TargetInput(props: TargetInputProps) {
           mode: 'icon',
         },
       }}
-      {...props}
+      {...inputProps}
       value={props.value}
       renderSuffix={() => (
         <>
