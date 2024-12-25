@@ -172,7 +172,6 @@ pub fn run() {
                 match running_tasks_state.inner().lock() {
                     Ok(running_tasks) => {
                         if !running_tasks.is_empty() {
-                            let window_ = window.clone();
                             let user_result = window.dialog()
                                 .message("You have running parsing task, close application will stop parsing and leave target file in middle state. Are you sure to TERMINATE parsing and exit?")
                                 .title("Confirm")
@@ -185,8 +184,12 @@ pub fn run() {
                             if !user_result {
                                 return api.prevent_close();
                             }
+
                             let result = async_runtime::block_on(async move {
-                                utils::kill_tasks(window_, running_tasks).await
+                                utils::kill_tasks(
+                                    window.shell(),
+                                    running_tasks.iter().map(|task| task.pid.to_string()).collect::<Vec<String>>(),
+                                ).await
                             });
                             if !result {
                                 api.prevent_close();

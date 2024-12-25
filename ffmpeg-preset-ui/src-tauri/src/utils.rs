@@ -1,14 +1,11 @@
-use std::sync::MutexGuard;
-use tauri::{Manager, Window};
-use tauri_plugin_shell::ShellExt;
+use tauri::Wry;
+use tauri_plugin_shell::Shell;
 use serde::{Deserialize, Deserializer};
 use base64::{Engine as _, engine::general_purpose};
 use uuid::Uuid;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use chrono::{NaiveTime, ParseResult, Timelike};
-
-use super::ParseTask;
 
 pub fn deserialize_files<'de, D>(deserializer: D) -> Result<Vec<(String, Option<String>)>, D::Error>
 where
@@ -49,23 +46,21 @@ pub fn generate_uuid() -> String {
     return general_purpose::URL_SAFE_NO_PAD.encode(bytes);
 }
 
-pub async fn kill_tasks(window: Window, running_tasks: MutexGuard<'_, Vec<ParseTask>>) -> bool {
+pub async fn kill_tasks<T>(shell: &Shell<Wry>, running_task_ids: T) -> bool
+where
+    T: IntoIterator,
+    T::Item: AsRef<str>,
+{
     #[cfg(windows)]
     {
-        let mut pids = running_tasks
-            .iter()
-            .flat_map(|task| vec!["/PID".to_string(), task.pid.to_string()])
+        let mut pids = running_task_ids
+            .into_iter()
+            .flat_map(|task_id| vec!["/PID".to_string(), task_id.as_ref().to_string()])
             .collect::<Vec<String>>();
         let mut taskkill_args = vec![String::from("/F"), String::from("/T")];
         taskkill_args.append(&mut pids);
 
-        let kill_result = window
-            .app_handle()
-            .shell()
-            .command("taskkill")
-            .args(taskkill_args)
-            .status()
-            .await;
+        let kill_result = shell.command("taskkill").args(taskkill_args).status().await;
 
         match kill_result {
             Ok(exit_status) => exit_status.success(),
