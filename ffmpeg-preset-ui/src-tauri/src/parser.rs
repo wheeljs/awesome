@@ -24,6 +24,7 @@ pub struct ParseCommand {
 }
 
 impl ParseCommand {
+    #[allow(unused)]
     pub fn args_str(&self) -> String {
         self.args.join(" ")
     }
