@@ -46,7 +46,7 @@ fn terminate_parse(
     })
 }
 
-#[tauri::command(rename_all = "snake_case")]
+#[tauri::command]
 async fn start_parse(
     app_handle: AppHandle,
     webview_window: WebviewWindow,
