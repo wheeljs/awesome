@@ -1,0 +1,12 @@
+.task-progress {
+  margin-top: 8px;
+  display: flex;
+
+  .progress-indicator {
+    flex: 1 1;
+  }
+}
+
+.task-terminate-btn {
+  flex-shrink: 0;
+}

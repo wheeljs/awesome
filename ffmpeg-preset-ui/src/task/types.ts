@@ -15,6 +15,7 @@ export type Task = {
 
 export type CompletedTask = Task & {
   id: string;
+  status: 'completed' | 'terminated';
 };
 
 interface TaskEventMap {

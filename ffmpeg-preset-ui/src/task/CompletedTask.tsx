@@ -11,7 +11,7 @@ export type CompletedTaskProps = {
 export function CompletedTaskComponent(props: CompletedTaskProps) {
   return (
     <div class="completed-task">
-      Task({props.task.id}) finished:<br/>
+      Task({props.task.id}) {props.task.status === 'completed' ? 'finished' : 'terminated'}:<br/>
       Parsed files:
       <ul>
         <For each={props.task.files}>

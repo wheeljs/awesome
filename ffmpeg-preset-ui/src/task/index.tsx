@@ -1,4 +1,4 @@
-import { For, createSignal } from 'solid-js';
+import { For, Show, createSignal } from 'solid-js';
 import { createStore } from 'solid-js/store';
 
 import { type Task, type TaskEvent, type CompletedTask } from './types';
@@ -9,20 +9,22 @@ import { CompletedTaskComponent } from './CompletedTask';
 export { CompletedTaskComponent };
 import { createParseTask } from './service';
 
+import { TaskProgress } from './TaskProgress';
+
 function TaskComponent() {
   const [completedTasks, setCompletedTasks] = createStore<CompletedTask[]>([]);
 
+  const [taskId, setTaskId] = createSignal('');
   const [parsing, setParsing] = createSignal(false);
   const [percent, setPercent] = createSignal(0);
   const [taskFinishedSignal, setTaskFinishedSignal] = createSignal(0);
 
   const onCreate = (createdTask: Task) => {
-    let taskId: string;
     const { channel } = createParseTask(createdTask);
 
     channel.onmessage = (event) => {
-      if (!taskId) {
-        taskId = event.data.id;
+      if (!taskId()) {
+        setTaskId(event.data.id);
       }
       if (!parsing()) {
         setParsing(true);
@@ -35,16 +37,22 @@ function TaskComponent() {
           );
           break;
         case 'finished':
+          const evt = event as TaskEvent<'finished'>;
+
           setParsing(false);
           setPercent(0);
           setCompletedTasks((draft) => [
             {
               ...createdTask,
-              id: taskId,
+              id: taskId(),
+              status: evt.data.success ? 'completed' : 'terminated',
             },
             ...draft,
           ]);
-          setTaskFinishedSignal(Date.now());
+          setTaskId('');
+          if (evt.data.success) {
+            setTaskFinishedSignal(Date.now());
+          }
           break;
       }
     };
@@ -58,9 +66,9 @@ function TaskComponent() {
     <TaskContext.Provider value={ctx}>
       <div>
         <CreateTask loading={parsing()} onCreate={onCreate} />
-        <div hidden={!parsing()} class="progress-indicator">
-          <span class="progress-indicator-bar" style={{ width: `${percent()}%` }}></span>
-        </div>
+        <Show when={parsing()}>
+          <TaskProgress taskId={taskId()} progress={percent()} />
+        </Show>
         <For each={completedTasks}>
           {(item) => (
             <CompletedTaskComponent task={item} />

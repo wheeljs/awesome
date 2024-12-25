@@ -32,6 +32,12 @@ export function createParseTask(task: Task): CreateTaskResult {
   };
 }
 
+export function terminateParseTask({ taskId }: { taskId: string }): Promise<boolean> {
+  return invoke<boolean>('terminate_parse', {
+    taskId,
+  });
+}
+
 type LatestTaskConfig = Pick<Task, 'command' | 'bashFile' | 'gpu' | 'useResize' | 'resize' | 'bitrate'>;
 const LatestTaskConfigStorageKey = 'latestTaskConfig';
 

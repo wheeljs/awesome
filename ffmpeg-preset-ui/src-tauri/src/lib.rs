@@ -24,6 +24,28 @@ pub struct ParseTask {
 
 pub type RunningTasks = Mutex<Vec<ParseTask>>;
 
+#[tauri::command]
+fn terminate_parse(
+    app_handle: AppHandle,
+    running_tasks_state: State<'_, RunningTasks>,
+    task_id: &str,
+) -> Result<bool, String> {
+    async_runtime::block_on(async move {
+        if let Ok(running_tasks) = running_tasks_state.lock() {
+            let task_to_kill: Vec<String> = running_tasks
+                .iter()
+                .filter(|x| x.id == task_id)
+                .map(|task| task.pid.to_string())
+                .collect();
+            if !task_to_kill.is_empty() {
+                return Ok(utils::kill_tasks(app_handle.shell(), task_to_kill).await);
+            }
+        }
+
+        Ok(false)
+    })
+}
+
 #[tauri::command(rename_all = "snake_case")]
 async fn start_parse(
     app_handle: AppHandle,
@@ -165,7 +187,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![start_parse])
+        .invoke_handler(tauri::generate_handler![start_parse, terminate_parse])
         .on_window_event(|window, event| match event {
             WindowEvent::CloseRequested { api, .. } => {
                 let running_tasks_state = window.state::<RunningTasks>();
