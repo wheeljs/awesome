@@ -1,15 +1,25 @@
 import { For, Show, createSignal } from 'solid-js';
 import { createStore, produce, unwrap } from 'solid-js/store';
 
-import { type NewTask, type Task, type TaskEvent, type RunningTask } from './types';
+import { type NewTask, type Task, type TaskFile, type TaskEvent, type TaskEventMap, type RunningTask } from './types';
 import { TaskContext } from './context';
 import { CreateTask } from './CreateTask';
 export { CreateTask };
 import { CompletedTaskComponent } from './CompletedTask';
 export { CompletedTaskComponent };
 import { createParseTask } from './service';
+import { ensureUnixPath } from '../utils/utils';
 
 import { TaskProgress } from './TaskProgress';
+
+const ParseFileEventFileStatusMapping: Record<
+  keyof Pick<TaskEventMap, 'startParseFile' | 'parseFileSuccess' | 'parseFileFailed'>,
+  TaskFile['status']
+> = {
+  'startParseFile': 'parsing',
+  'parseFileSuccess': 'completed',
+  'parseFileFailed': 'failed',
+};
 
 function TaskComponent() {
   const [task, setTask] = createStore<RunningTask>({
@@ -31,12 +41,33 @@ function TaskComponent() {
             id: event.data.id,
             status: 'parsing',
             ...createdTask,
+            files: createdTask.files.map((x) => ({
+              ...x,
+              normalizedSource: ensureUnixPath(x.source),
+              status: 'not-started',
+            })),
           };
           draft.parsing = true;
         }));
       }
 
       switch (event.event) {
+        case 'startParseFile':
+        case 'parseFileSuccess':
+        case 'parseFileFailed':
+          {
+            const evt = event as TaskEvent<'startParseFile'>;
+            const parsingFile = task.task!.files.find((x) => x.normalizedSource === evt.data.source);
+            if (parsingFile) {
+              setTask(produce((draft) => {
+                draft.task!.files
+                  .find((x) => x.normalizedSource === evt.data.source)!
+                  .status = ParseFileEventFileStatusMapping[evt.event];
+              }));
+            }
+          }
+
+          break;
         case 'percentProgress':
           setTask('percent', (event as TaskEvent<'percentProgress'>).data.percent);
           break;

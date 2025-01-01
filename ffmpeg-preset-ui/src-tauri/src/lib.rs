@@ -10,8 +10,8 @@ use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
 use tauri_plugin_shell::{ShellExt, process::CommandEvent};
 
 mod parser;
-use parser::{ParseOptions, ParseCommand, ParseEvent};
-use parser::parse::{try_duration_line, try_percent_line};
+use parser::{parse::ConvertStatusLine, ParseCommand, ParseEvent, ParseOptions};
+use parser::parse::{try_converting_line, try_duration_line, try_percent_line};
 
 pub mod utils;
 use utils::generate_uuid;
@@ -101,12 +101,37 @@ async fn start_parse(
         });
         match event {
             CommandEvent::Stdout(line) => {
+                let line_str = String::from_utf8_lossy(&line);
+
+                if let Some((status, (source, target))) = try_converting_line(&line_str) {
+                    match status {
+                        ConvertStatusLine::Started => channel
+                            .send(ParseEvent::StartParseFile {
+                                id: &id,
+                                source,
+                                target,
+                            }),
+                        ConvertStatusLine::Succeed => channel
+                            .send(ParseEvent::ParseFileSuccess {
+                                id: &id,
+                                source,
+                                target,
+                            }),
+                        ConvertStatusLine::Failed => channel
+                            .send(ParseEvent::ParseFileFailed {
+                                id: &id,
+                                source,
+                                target,
+                            }),
+                    }.unwrap();
+                }
+
                 if need_std_output {
                     channel
                         .send(ParseEvent::StdOutput {
                             id: &id,
                             r#type: "stdout",
-                            content: &String::from_utf8_lossy(&line),
+                            content: &line_str,
                         })
                         .unwrap();
                 }

@@ -1,4 +1,5 @@
-import { createSignal } from 'solid-js';
+import { createSignal, createMemo } from 'solid-js';
+import { groupBy } from 'lodash-es';
 
 import { Modal } from '../components/Modal';
 import { terminateParseTask } from './service';
@@ -14,6 +15,29 @@ export function TaskProgress(props: TaskProgressProps) {
   const [showConfirmModal, setShowConfirmModal] = createSignal(false);
   const [showTerminateFailedModal, setShowTerminateFailedModal] = createSignal(false);
   const [terminating, setTerminating] = createSignal(false);
+
+  const files = createMemo(() => {
+    const groupedFiles = groupBy(props.runningTask.task?.files, x => x.status);
+    console.log(groupedFiles);
+    return {
+      statusFiles: groupedFiles,
+      parsingFile: props.runningTask.task?.files?.find?.((x) => x.status === 'parsing'),
+    };
+  });
+
+  const parsingStr = () => {
+    const { statusFiles, parsingFile } = files();
+    if (parsingFile) {
+      let parsingStr = `Parsing ${parsingFile.source}`;
+      if (statusFiles) {
+        parsingStr += `(${(statusFiles.completed?.length ?? 0) + 1}/${props.runningTask.task?.files.length})`;
+      }
+
+      return parsingStr;
+    }
+
+    return '';
+  };
 
   const handleStopTask = async (confirmed = false) => {
     if (!confirmed) {
@@ -39,7 +63,10 @@ export function TaskProgress(props: TaskProgressProps) {
     <>
       <div class="task-progress">
         <div class="progress-indicator">
-          <span class="progress-indicator-bar" style={{ width: `${props.runningTask.percent}%` }}></span>
+          <div class="progress-indicator progress-indicator-wrapper">
+            <span class="progress-indicator-text">{parsingStr()}</span>
+            <span class="progress-indicator-bar" data-text={parsingStr()} style={{ width: `${props.runningTask.percent}%` }}></span>
+          </div>
         </div>
         <button class="task-terminate-btn" disabled={terminating()} onClick={() => handleStopTask()}>Terminate</button>
       </div>

@@ -13,12 +13,24 @@ export type NewTask = {
   files: NewTaskFile[];
 };
 
-export type Task = NewTask & {
+export type TaskFile = NewTaskFile & {
+  normalizedSource: string;
+  status: 'not-started' | 'parsing' | 'completed' | 'failed';
+};
+
+export type Task = Omit<NewTask, 'files'> & {
   id: string;
+  files: TaskFile[];
   status: 'parsing' | 'completed' | 'terminated';
 };
 
-interface TaskEventMap {
+type ParseFileEventPayload = {
+  id: string;
+  source: string;
+  target: string;
+};
+
+export interface TaskEventMap {
   'started': {
     id: string;
   };
@@ -35,6 +47,9 @@ interface TaskEventMap {
     id: string;
     success: boolean;
   };
+  'startParseFile': ParseFileEventPayload;
+  'parseFileSuccess': ParseFileEventPayload;
+  'parseFileFailed': ParseFileEventPayload;
 }
 
 export interface TaskEvent<K extends keyof TaskEventMap = keyof TaskEventMap> {

@@ -4,6 +4,36 @@
 
   .progress-indicator {
     flex: 1 1;
+    overflow: hidden;
+  
+    &-wrapper {
+      padding: 0;
+      height: 100%;
+      box-shadow: none;
+      border: none;
+    }
+
+    &-text {
+      word-break: keep-all;
+      white-space: nowrap;
+      line-height: 24px;
+    }
+
+    .progress-indicator-bar {
+      position: absolute;
+      top: 0;
+      overflow: clip;
+
+      &::after {
+        position: absolute;
+        content: attr(data-text);
+        z-index: 10;
+        word-break: keep-all;
+        white-space: nowrap;
+        color: #fff;
+        line-height: 24px;
+      }
+    }
   }
 }
 
