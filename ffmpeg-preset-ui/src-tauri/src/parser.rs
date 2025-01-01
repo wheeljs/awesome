@@ -5,6 +5,8 @@ use once_cell::sync::Lazy;
 
 use super::utils::deserialize_files;
 
+pub mod parse;
+
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ParseOptions {

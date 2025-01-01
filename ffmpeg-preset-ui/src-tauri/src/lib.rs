@@ -10,9 +10,10 @@ use tauri_plugin_shell::{ShellExt, process::CommandEvent};
 
 mod parser;
 use parser::{ParseOptions, ParseCommand, ParseEvent};
+use parser::parse::{try_duration_line, try_percent_line};
 
 pub mod utils;
-use utils::{generate_uuid, try_duration_line, try_percent_line};
+use utils::generate_uuid;
 
 pub struct ParseTask {
     id: String,
