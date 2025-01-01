@@ -15,7 +15,7 @@ export type NewTask = {
 
 export type Task = NewTask & {
   id: string;
-  status: 'completed' | 'terminated';
+  status: 'parsing' | 'completed' | 'terminated';
 };
 
 interface TaskEventMap {
@@ -41,3 +41,9 @@ export interface TaskEvent<K extends keyof TaskEventMap = keyof TaskEventMap> {
   event: K;
   data: TaskEventMap[K];
 }
+
+export type RunningTask = {
+  task: Task | null;
+  parsing: boolean;
+  percent: number;
+};

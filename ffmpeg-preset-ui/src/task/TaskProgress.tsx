@@ -2,12 +2,12 @@ import { createSignal } from 'solid-js';
 
 import { Modal } from '../components/Modal';
 import { terminateParseTask } from './service';
+import { type RunningTask } from './types';
 
 import './TaskProgress.scss';
 
 export type TaskProgressProps = {
-  taskId: string,
-  progress: number;
+  runningTask: RunningTask;
 };
 
 export function TaskProgress(props: TaskProgressProps) {
@@ -27,7 +27,7 @@ export function TaskProgress(props: TaskProgressProps) {
     setTerminating(true);
     try {
       await terminateParseTask({
-        taskId: props.taskId
+        taskId: props.runningTask.task!.id,
       });
     } catch {
       setTerminating(false);
@@ -39,7 +39,7 @@ export function TaskProgress(props: TaskProgressProps) {
     <>
       <div class="task-progress">
         <div class="progress-indicator">
-          <span class="progress-indicator-bar" style={{ width: `${props.progress}%` }}></span>
+          <span class="progress-indicator-bar" style={{ width: `${props.runningTask.percent}%` }}></span>
         </div>
         <button class="task-terminate-btn" disabled={terminating()} onClick={() => handleStopTask()}>Terminate</button>
       </div>
