@@ -137,20 +137,20 @@ async fn start_parse(
                             (current_duration as f64 / total_duration as f64 * 100.0).round() as u8;
                         let percent = percent.min(100);
 
-                        {
-                            let mut running_tasks = running_tasks_state.lock().unwrap();
-                            if let Some(task) = running_tasks.iter_mut().find(|t| t.id == id) {
+                        let mut running_tasks = running_tasks_state.lock().unwrap();
+                        if let Some(task) = running_tasks.iter_mut().find(|t| t.id == id) {
+                            if task.percent != percent {
                                 task.percent = percent;
+
+                                let _ = webview_window.set_progress_bar(ProgressBarState {
+                                    status: None,
+                                    progress: Some(percent as u64),
+                                });
+                                channel
+                                    .send(ParseEvent::PercentProgress { id: &id, percent })
+                                    .map_err(|e| e.to_string())?;
                             }
                         }
-
-                        let _ = webview_window.set_progress_bar(ProgressBarState {
-                            status: None,
-                            progress: Some(percent as u64),
-                        });
-                        channel
-                            .send(ParseEvent::PercentProgress { id: &id, percent })
-                            .map_err(|e| e.to_string())?;
                     }
                 }
 
