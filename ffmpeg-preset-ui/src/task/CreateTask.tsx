@@ -99,12 +99,15 @@ export function CreateTask(props: CreateTaskProps) {
   let unlisten: UnlistenFn;
   tauriDragAndDrop({
     onDrop: (event) => {
-      setNewTask('files', (draft) => uniqBy([
-        ...draft,
-        ...event.paths.map((x) => ({
-          source: x,
-        })),
-      ], 'source'));
+      setNewTask('files', (draft) => uniqBy(
+        [
+          ...draft,
+          ...event.paths.map((x) => ({
+            source: x,
+          })),
+        ].filter(validateFileItem),
+        'source',
+      ));
     },
   }).then((fn) => unlisten = fn);
 
