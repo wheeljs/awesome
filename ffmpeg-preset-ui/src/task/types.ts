@@ -1,19 +1,19 @@
-export type TaskFile = {
+export type NewTaskFile = {
   source: string;
   target?: string;
 };
 
-export type Task = {
+export type NewTask = {
   command: string;
   bashFile: string;
   gpu: boolean;
   useResize?: boolean;
   resize?: string;
   bitrate: string;
-  files: TaskFile[];
+  files: NewTaskFile[];
 };
 
-export type CompletedTask = Task & {
+export type Task = NewTask & {
   id: string;
   status: 'completed' | 'terminated';
 };

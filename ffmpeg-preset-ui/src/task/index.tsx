@@ -1,7 +1,7 @@
 import { For, Show, createSignal } from 'solid-js';
 import { createStore } from 'solid-js/store';
 
-import { type Task, type TaskEvent, type CompletedTask } from './types';
+import { type NewTask, type Task, type TaskEvent } from './types';
 import { TaskContext } from './context';
 import { CreateTask } from './CreateTask';
 export { CreateTask };
@@ -12,14 +12,14 @@ import { createParseTask } from './service';
 import { TaskProgress } from './TaskProgress';
 
 function TaskComponent() {
-  const [completedTasks, setCompletedTasks] = createStore<CompletedTask[]>([]);
+  const [completedTasks, setCompletedTasks] = createStore<Task[]>([]);
 
   const [taskId, setTaskId] = createSignal('');
   const [parsing, setParsing] = createSignal(false);
   const [percent, setPercent] = createSignal(0);
   const [taskFinishedSignal, setTaskFinishedSignal] = createSignal(0);
 
-  const onCreate = (createdTask: Task) => {
+  const onCreate = (createdTask: NewTask) => {
     const { channel } = createParseTask(createdTask);
 
     channel.onmessage = (event) => {

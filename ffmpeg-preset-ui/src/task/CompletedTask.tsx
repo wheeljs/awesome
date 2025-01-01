@@ -1,11 +1,11 @@
 import { For, Show } from 'solid-js';
 
-import { type CompletedTask } from './types';
+import { type Task } from './types';
 
 import './CompletedTask.scss';
 
 export type CompletedTaskProps = {
-  task: CompletedTask;
+  task: Task;
 };
 
 export function CompletedTaskComponent(props: CompletedTaskProps) {

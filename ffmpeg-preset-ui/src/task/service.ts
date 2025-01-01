@@ -1,8 +1,8 @@
-import { type Task, type TaskEvent } from './types';
+import { type NewTask, type TaskEvent } from './types';
 import { invoke, Channel } from '@tauri-apps/api/core';
 import { pick } from 'lodash-es';
 
-interface NewTask extends Omit<Task, 'files'> {
+interface NewTaskInService extends Omit<NewTask, 'files'> {
   files?: string[][];
 }
 
@@ -11,11 +11,11 @@ type CreateTaskResult = {
   channel: Channel<TaskEvent>;
 };
 
-export function createParseTask(task: Task): CreateTaskResult {
+export function createParseTask(task: NewTask): CreateTaskResult {
   const { files, ...newTask } = task;
 
   if (Array.isArray(task.files)) {
-    (newTask as NewTask).files = task.files.map<string[]>(
+    (newTask as NewTaskInService).files = task.files.map<string[]>(
       (file) => ([file.source, file.target].filter((x) => x) as string[])
     );
   }
@@ -39,7 +39,7 @@ export function terminateParseTask({ taskId }: { taskId: string }): Promise<bool
   });
 }
 
-type LatestTaskConfig = Pick<Task, 'command' | 'bashFile' | 'gpu' | 'useResize' | 'resize' | 'bitrate'>;
+type LatestTaskConfig = Pick<NewTask, 'command' | 'bashFile' | 'gpu' | 'useResize' | 'resize' | 'bitrate'>;
 const LatestTaskConfigStorageKey = 'latestTaskConfig';
 
 export function loadLatestTaskConfig(): Promise<LatestTaskConfig | undefined> {

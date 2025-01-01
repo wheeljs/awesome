@@ -7,7 +7,7 @@ import { faCircleQuestion } from '@fortawesome/free-regular-svg-icons';
 import { uniqBy, groupBy, cloneDeep } from 'lodash-es';
 
 import { tauriDragAndDrop } from '../reusables/dragAndDrop';
-import type { Task, TaskFile } from './types';
+import type { NewTask, NewTaskFile } from './types';
 import { TaskContext, TaskFileContext } from './context';
 import { loadLatestTaskConfig, saveLatestTaskConfig } from './service';
 import { BrowseInput } from '../components/BrowseInput';
@@ -16,16 +16,16 @@ import './CreateTask.scss';
 
 export type CreateTaskProps = {
   loading?: boolean;
-  onCreate: (createTask: Task) => void;
+  onCreate: (createTask: NewTask) => void;
 };
 
-const validateFileItem = (file: TaskFile) => file.source?.length > 0;
+const validateFileItem = (file: NewTaskFile) => file.source?.length > 0;
 
 export function CreateTask(props: CreateTaskProps) {
   const IdPrefix = 'create-task-';
   const id = (part: string) => `${IdPrefix}${part}`;
 
-  const [newTask, setNewTask] = createStore<Task>({
+  const [newTask, setNewTask] = createStore<NewTask>({
     command: '',
     bashFile: '',
     gpu: true,
@@ -47,7 +47,7 @@ export function CreateTask(props: CreateTaskProps) {
     }
   });
 
-  const updator = <K extends keyof Task>(key: K, value: Task[K]) => {
+  const updator = <K extends keyof NewTask>(key: K, value: NewTask[K]) => {
     setNewTask(
       produce((draft) => {
         draft[key] = value;
@@ -55,7 +55,7 @@ export function CreateTask(props: CreateTaskProps) {
     );
   };
 
-  const updateFile = <K extends keyof TaskFile>(index: number, key: K, value: TaskFile[K]) => {
+  const updateFile = <K extends keyof NewTaskFile>(index: number, key: K, value: NewTaskFile[K]) => {
     setNewTask('files', index, produce((draft) => {
       draft[key] = value;
     }));
@@ -83,7 +83,7 @@ export function CreateTask(props: CreateTaskProps) {
       updateFile(index, 'source', result[0]);
     } else if (index === 0) {
       setNewTask('files', (draft) => {
-        const newTaskFiles: TaskFile[] = uniqBy(
+        const newTaskFiles: NewTaskFile[] = uniqBy(
           [
             ...draft,
             ...result.map((x) => ({ source: x })),
@@ -124,7 +124,7 @@ export function CreateTask(props: CreateTaskProps) {
       setNewTask('files', (draft) => draft.filter(validateFileItem));
     }
 
-    const createdTask: Task = cloneDeep(unwrap(newTask));
+    const createdTask: NewTask = cloneDeep(unwrap(newTask));
     if (!createdTask.useResize) {
       delete createdTask.resize;
     }
