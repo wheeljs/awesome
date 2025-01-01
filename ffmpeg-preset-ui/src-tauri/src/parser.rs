@@ -47,7 +47,11 @@ fn ensure_unix_path<P: AsRef<Path>>(path: P) -> String {
 
     if WINDOWS_STYLE_PATH_REGEX.is_match(&path_str) {
         if let Some((driver, tail)) = path_str.split_once(":\\") {
-            return format!("/{}/{}", driver.to_lowercase(), normalize_unix_path(&tail.replace("\\", "/")));
+            return format!(
+                "/{}/{}",
+                driver.to_lowercase(),
+                normalize_unix_path(&tail.replace("\\", "/"))
+            );
         }
     }
 
@@ -188,8 +192,14 @@ mod tests {
                 (String::from("C:\\path\\with\\a space\\video2.mp4"), None),
                 (String::from("/path/to/video(3).mp4"), None),
                 (String::from("C:\\path\\to\\video(4).mp4"), None),
-                (String::from("/path/to/video5.mp4"), Some(String::from("/targ&et/video5.mp4"))),
-                (String::from("C:\\path\\to\\video6.mp4"), Some(String::from("C:\\targ&et\\video6.mp4"))),
+                (
+                    String::from("/path/to/video5.mp4"),
+                    Some(String::from("/targ&et/video5.mp4")),
+                ),
+                (
+                    String::from("C:\\path\\to\\video6.mp4"),
+                    Some(String::from("C:\\targ&et\\video6.mp4")),
+                ),
             ],
         });
 

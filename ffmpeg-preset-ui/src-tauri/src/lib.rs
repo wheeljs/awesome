@@ -169,7 +169,8 @@ async fn start_parse(
                     let mut running_tasks = running_tasks_state.lock().unwrap();
                     running_tasks.retain(|x| x.id != id.clone());
                 }
-                let _ = webview_window.request_user_attention(Some(UserAttentionType::Informational));
+                let _ =
+                    webview_window.request_user_attention(Some(UserAttentionType::Informational));
                 let _ = webview_window.set_progress_bar(ProgressBarState {
                     status: Some(ProgressBarStatus::None),
                     progress: None,
