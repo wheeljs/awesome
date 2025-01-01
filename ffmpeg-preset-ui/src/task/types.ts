@@ -22,7 +22,7 @@ interface TaskEventMap {
   'started': {
     id: string;
   };
-  'progress': {
+  'stdOutput': {
     id: string;
     type: 'stdout' | 'stderr';
     content: string;

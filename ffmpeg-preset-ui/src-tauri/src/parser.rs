@@ -108,7 +108,7 @@ pub enum ParseEvent<'a> {
     #[serde(rename_all = "camelCase")]
     Started { id: &'a str },
     #[serde(rename_all = "camelCase")]
-    Progress {
+    StdOutput {
         id: &'a str,
         r#type: &'a str,
         content: &'a str,

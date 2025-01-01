@@ -92,7 +92,7 @@ async fn start_parse(
         match event {
             CommandEvent::Stdout(line) => {
                 channel
-                    .send(ParseEvent::Progress {
+                    .send(ParseEvent::StdOutput {
                         id: &id,
                         r#type: "stdout",
                         content: &String::from_utf8_lossy(&line),
@@ -143,7 +143,7 @@ async fn start_parse(
                 }
 
                 channel
-                    .send(ParseEvent::Progress {
+                    .send(ParseEvent::StdOutput {
                         id: &id,
                         r#type: "stderr",
                         content: &line_str,
