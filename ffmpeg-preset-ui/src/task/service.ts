@@ -24,6 +24,7 @@ export function createParseTask(task: Task): CreateTaskResult {
   const pending = invoke<void>('start_parse', {
     options: newTask,
     channel,
+    taskOptions: {},
   });
 
   return {

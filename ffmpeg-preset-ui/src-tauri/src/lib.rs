@@ -1,4 +1,5 @@
 use std::sync::Mutex;
+use serde::Deserialize;
 use tauri::{
     async_runtime,
     ipc::Channel,
@@ -47,6 +48,12 @@ fn terminate_parse(
     })
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct TaskOptions {
+    need_std_output: Option<bool>,
+}
+
 #[tauri::command]
 async fn start_parse(
     app_handle: AppHandle,
@@ -54,6 +61,7 @@ async fn start_parse(
     running_tasks_state: State<'_, RunningTasks>,
     options: ParseOptions,
     channel: Channel<ParseEvent<'_>>,
+    task_options: TaskOptions,
 ) -> Result<(), String> {
     let id = generate_uuid();
 
@@ -85,19 +93,23 @@ async fn start_parse(
         .map_err(|e| e.to_string())?;
 
     while let Some(event) = rx.recv().await {
+        let need_std_output = task_options.need_std_output.unwrap_or(false);
+
         let _ = webview_window.set_progress_bar(ProgressBarState {
             status: Some(ProgressBarStatus::Normal),
             progress: Some(0),
         });
         match event {
             CommandEvent::Stdout(line) => {
-                channel
-                    .send(ParseEvent::StdOutput {
-                        id: &id,
-                        r#type: "stdout",
-                        content: &String::from_utf8_lossy(&line),
-                    })
-                    .unwrap();
+                if need_std_output {
+                    channel
+                        .send(ParseEvent::StdOutput {
+                            id: &id,
+                            r#type: "stdout",
+                            content: &String::from_utf8_lossy(&line),
+                        })
+                        .unwrap();
+                }
             }
             CommandEvent::Stderr(line) => {
                 let line_str = String::from_utf8_lossy(&line);
@@ -142,13 +154,15 @@ async fn start_parse(
                     }
                 }
 
-                channel
-                    .send(ParseEvent::StdOutput {
-                        id: &id,
-                        r#type: "stderr",
-                        content: &line_str,
-                    })
-                    .unwrap();
+                if need_std_output {
+                    channel
+                        .send(ParseEvent::StdOutput {
+                            id: &id,
+                            r#type: "stderr",
+                            content: &line_str,
+                        })
+                        .unwrap();
+                }
             }
             CommandEvent::Terminated(payload) => {
                 {
