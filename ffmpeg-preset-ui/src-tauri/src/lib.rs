@@ -85,7 +85,7 @@ async fn start_parse(
         .map_err(|e| e.to_string())?;
 
     while let Some(event) = rx.recv().await {
-        webview_window.set_progress_bar(ProgressBarState {
+        let _ = webview_window.set_progress_bar(ProgressBarState {
             status: Some(ProgressBarStatus::Normal),
             progress: Some(0),
         });
@@ -132,7 +132,7 @@ async fn start_parse(
                             }
                         }
 
-                        webview_window.set_progress_bar(ProgressBarState {
+                        let _ = webview_window.set_progress_bar(ProgressBarState {
                             status: None,
                             progress: Some(percent as u64),
                         });
@@ -155,8 +155,8 @@ async fn start_parse(
                     let mut running_tasks = running_tasks_state.lock().unwrap();
                     running_tasks.retain(|x| x.id != id.clone());
                 }
-                webview_window.request_user_attention(Some(UserAttentionType::Informational));
-                webview_window.set_progress_bar(ProgressBarState {
+                let _ = webview_window.request_user_attention(Some(UserAttentionType::Informational));
+                let _ = webview_window.set_progress_bar(ProgressBarState {
                     status: Some(ProgressBarStatus::None),
                     progress: None,
                 });
