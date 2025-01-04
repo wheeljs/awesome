@@ -15,8 +15,11 @@ export type NewTask = {
 
 export type TaskFile = NewTaskFile & {
   normalizedSource: string;
+  sourceSize?: string;
   normalizedTarget?: string;
+  targetSize?: string;
   status: 'not-started' | 'parsing' | 'completed' | 'failed';
+  reduceSize?: string;
 };
 
 export type Task = Omit<NewTask, 'files'> & {
@@ -29,6 +32,14 @@ type ParseFileEventPayload = {
   id: string;
   source: string;
   target: string;
+};
+
+export type Summary = {
+  source: string;
+  sourceSize: string;
+  target: string;
+  targetSize: string;
+  reduceSize: string;
 };
 
 export interface TaskEventMap {
@@ -47,6 +58,7 @@ export interface TaskEventMap {
   'finished': {
     id: string;
     success: boolean;
+    summaries: Summary[];
   };
   'startParseFile': ParseFileEventPayload;
   'parseFileSuccess': ParseFileEventPayload;

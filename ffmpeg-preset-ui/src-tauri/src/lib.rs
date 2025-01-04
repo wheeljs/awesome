@@ -10,8 +10,10 @@ use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
 use tauri_plugin_shell::{ShellExt, process::CommandEvent};
 
 mod parser;
-use parser::{ParseCommand, ParseEvent, ParseOptions};
-use parser::parse::{ConvertStatusLine, try_converting_line, try_duration_line, try_percent_line};
+use parser::{ParseCommand, ParseEvent, ParseOptions, Summary};
+use parser::parse::{
+    ConvertStatusLine, try_converting_line, try_duration_line, try_percent_line, try_summary_line,
+};
 
 pub mod utils;
 use utils::generate_uuid;
@@ -92,6 +94,7 @@ async fn start_parse(
         .send(ParseEvent::Started { id: &id })
         .map_err(|e| e.to_string())?;
 
+    let mut summaries: Vec<Summary> = vec![];
     while let Some(event) = rx.recv().await {
         let need_std_output = task_options.need_std_output.unwrap_or(false);
 
@@ -107,6 +110,9 @@ async fn start_parse(
                     channel
                         .send(ConvertStatusLine::<'_>::to_parse_event(&status, &id))
                         .unwrap();
+                }
+                if let Some(summary) = try_summary_line(&line_str) {
+                    summaries.push(summary);
                 }
 
                 if need_std_output {
@@ -183,10 +189,12 @@ async fn start_parse(
                     status: Some(ProgressBarStatus::None),
                     progress: None,
                 });
+
                 channel
                     .send(ParseEvent::Finished {
                         id: &id,
                         success: matches!(payload.code, Some(0)),
+                        summaries: summaries.clone(),
                     })
                     .unwrap();
             }

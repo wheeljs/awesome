@@ -106,6 +106,16 @@ impl ParseCommand {
     }
 }
 
+#[derive(Debug, PartialEq, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Summary {
+    source: String,
+    source_size: String,
+    target: String,
+    target_size: String,
+    reduce_size: String,
+}
+
 #[derive(Clone, Serialize)]
 pub struct ParseFileEventPayload<'a> {
     id: &'a str,
@@ -127,7 +137,7 @@ pub enum ParseEvent<'a> {
     #[serde(rename_all = "camelCase")]
     PercentProgress { id: &'a str, percent: u8 },
     #[serde(rename_all = "camelCase")]
-    Finished { id: &'a str, success: bool },
+    Finished { id: &'a str, success: bool, summaries: Vec<Summary> },
     #[serde(rename_all = "camelCase")]
     StartParseFile(ParseFileEventPayload<'a>),
     #[serde(rename_all = "camelCase")]

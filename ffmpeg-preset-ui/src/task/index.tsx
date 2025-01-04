@@ -1,5 +1,6 @@
 import { For, Show, createSignal } from 'solid-js';
 import { createStore, produce, unwrap } from 'solid-js/store';
+import { cloneDeep } from 'lodash-es';
 
 import { type NewTask, type Task, type TaskFile, type TaskEvent, type TaskEventMap, type RunningTask } from './types';
 import { TaskContext } from './context';
@@ -77,13 +78,28 @@ function TaskComponent() {
           {
             const evt = event as TaskEvent<'finished'>;
   
-            setCompletedTasks((draft) => [
-              {
-                ...unwrap(task.task!),
-                status: evt.data.success ? 'completed' : 'terminated',
-              },
-              ...draft,
-            ]);
+            setCompletedTasks((draft) => {
+              const completedTask = cloneDeep(unwrap(task.task!));
+              if (Array.isArray(evt.data.summaries)) {
+                completedTask.files = completedTask.files.map((x) => {
+                  const file = { ...x };
+                  const summary = evt.data.summaries.find((summary) => summary.source === x.normalizedSource);
+                  if (summary) {
+                    Object.assign(file, summary);
+                  }
+  
+                  return file;
+                });
+              }
+
+              return [
+                {
+                  ...completedTask,
+                  status: evt.data.success ? 'completed' : 'terminated',
+                },
+                ...draft,
+              ];
+            });
             setTask({
               task: null,
               parsing: false,
