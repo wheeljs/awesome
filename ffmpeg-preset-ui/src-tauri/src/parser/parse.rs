@@ -1,5 +1,7 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
+
+use super::{ParseEvent, ParseFileEventPayload};
 use super::super::utils;
 
 static DURATION_LINE_REGEX: Lazy<Regex> =
@@ -30,37 +32,67 @@ pub fn try_percent_line(line: &str) -> Option<u64> {
     utils::time_str_to_milliseconds(percent_str, None).ok()
 }
 
-static CONVERTING_LINE_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"Convert(?<status>\w+?)(?: (?<result>\w+):)? (?<input_path>.+?) ===> (?<output_path>.+)").unwrap());
+static CONVERTING_LINE_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(
+        r"Convert(?<status>\w+?)(?: (?<result>\w+):)? (?<input_path>.+?) ===> (?<output_path>.+)",
+    )
+    .unwrap()
+});
 
+type FileTuple<'a> = (&'a str, &'a str);
 #[derive(Debug, PartialEq)]
-pub enum ConvertStatusLine {
-    Started,
-    Succeed,
-    Failed,
+pub enum ConvertStatusLine<'a> {
+    Started(FileTuple<'a>),
+    Succeed(FileTuple<'a>),
+    Failed(FileTuple<'a>),
 }
 
-pub fn try_converting_line(line: &str) -> Option<(ConvertStatusLine, (&str, &str))> {
+impl ConvertStatusLine<'_> {
+    pub fn to_parse_event<'a>(value: &'a Self, id: &'a str) -> ParseEvent<'a> {
+        match value {
+            Self::Started(file) => ParseEvent::StartParseFile(ParseFileEventPayload {
+                id,
+                source: file.0,
+                target: file.1,
+            }),
+            Self::Succeed(file) => ParseEvent::ParseFileSuccess(ParseFileEventPayload {
+                id,
+                source: file.0,
+                target: file.1,
+            }),
+            Self::Failed(file) => ParseEvent::ParseFileFailed(ParseFileEventPayload {
+                id,
+                source: file.0,
+                target: file.1,
+            }),
+        }
+    }
+}
+
+pub fn try_converting_line(line: &str) -> Option<ConvertStatusLine> {
     if CONVERTING_LINE_REGEX.is_match(line) {
         if let Some(caps) = CONVERTING_LINE_REGEX.captures(line) {
-            let file = (caps.name("input_path").unwrap().as_str(), caps.name("output_path").unwrap().as_str());
+            let file = (
+                caps.name("input_path").unwrap().as_str(),
+                caps.name("output_path").unwrap().as_str(),
+            );
             match caps.name("status").unwrap().as_str() {
                 "ing" => {
-                    return Some((ConvertStatusLine::Started, file));
-                },
+                    return Some(ConvertStatusLine::Started(file));
+                }
                 "ed" => {
                     return match caps.name("result").unwrap().as_str() {
-                        "success" => Some((ConvertStatusLine::Succeed, file)),
-                        "failed" => Some((ConvertStatusLine::Failed, file)),
+                        "success" => Some(ConvertStatusLine::Succeed(file)),
+                        "failed" => Some(ConvertStatusLine::Failed(file)),
                         _ => None,
                     }
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
     }
 
-    return None;
+    None
 }
 
 #[cfg(test)]
@@ -103,23 +135,38 @@ mod test {
     fn try_converting_line_works() {
         assert_eq!(
             try_converting_line("Converting /path/to/video.mp4 ===> /path/to/target.mp4"),
-            Some((ConvertStatusLine::Started, ("/path/to/video.mp4", "/path/to/target.mp4"))),
+            Some(ConvertStatusLine::Started((
+                "/path/to/video.mp4",
+                "/path/to/target.mp4"
+            ))),
         );
         assert_eq!(
             try_converting_line("Converting /path/t\\ o/video.mp4 ===> /path/t\\ o/target.mp4"),
-            Some((ConvertStatusLine::Started, ("/path/t\\ o/video.mp4", "/path/t\\ o/target.mp4"))),
+            Some(ConvertStatusLine::Started((
+                "/path/t\\ o/video.mp4",
+                "/path/t\\ o/target.mp4"
+            ))),
         );
         assert_eq!(
             try_converting_line("Converting success: /path/to/video.mp4 ===> /path/to/target.mp4"),
-            Some((ConvertStatusLine::Started, ("/path/to/video.mp4", "/path/to/target.mp4"))),
+            Some(ConvertStatusLine::Started((
+                "/path/to/video.mp4",
+                "/path/to/target.mp4"
+            ))),
         );
         assert_eq!(
             try_converting_line("Converted success: /path/to/video.mp4 ===> /path/to/target.mp4"),
-            Some((ConvertStatusLine::Succeed, ("/path/to/video.mp4", "/path/to/target.mp4"))),
+            Some(ConvertStatusLine::Succeed((
+                "/path/to/video.mp4",
+                "/path/to/target.mp4"
+            ))),
         );
         assert_eq!(
             try_converting_line("Converted failed: /path/to/video.mp4 ===> /path/to/target.mp4"),
-            Some((ConvertStatusLine::Failed, ("/path/to/video.mp4", "/path/to/target.mp4"))),
+            Some(ConvertStatusLine::Failed((
+                "/path/to/video.mp4",
+                "/path/to/target.mp4"
+            ))),
         );
         assert_eq!(
             try_converting_line("frame=87506 fps=313 q=20.0 size=  558592kB time=00:48:36.98 bitrate=1568.7kbits/s speed=10.5x    \r"),

@@ -107,6 +107,13 @@ impl ParseCommand {
 }
 
 #[derive(Clone, Serialize)]
+pub struct ParseFileEventPayload<'a> {
+    id: &'a str,
+    source: &'a str,
+    target: &'a str,
+}
+
+#[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase", tag = "event", content = "data")]
 pub enum ParseEvent<'a> {
     #[serde(rename_all = "camelCase")]
@@ -122,23 +129,11 @@ pub enum ParseEvent<'a> {
     #[serde(rename_all = "camelCase")]
     Finished { id: &'a str, success: bool },
     #[serde(rename_all = "camelCase")]
-    StartParseFile {
-        id: &'a str,
-        source: &'a str,
-        target: &'a str,
-    },
+    StartParseFile(ParseFileEventPayload<'a>),
     #[serde(rename_all = "camelCase")]
-    ParseFileSuccess {
-        id: &'a str,
-        source: &'a str,
-        target: &'a str,
-    },
+    ParseFileSuccess(ParseFileEventPayload<'a>),
     #[serde(rename_all = "camelCase")]
-    ParseFileFailed {
-        id: &'a str,
-        source: &'a str,
-        target: &'a str,
-    },
+    ParseFileFailed(ParseFileEventPayload<'a>),
 }
 
 #[cfg(test)]
