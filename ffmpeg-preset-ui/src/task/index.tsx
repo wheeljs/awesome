@@ -60,9 +60,11 @@ function TaskComponent() {
             const parsingFile = task.task!.files.find((x) => x.normalizedSource === evt.data.source);
             if (parsingFile) {
               setTask(produce((draft) => {
-                draft.task!.files
-                  .find((x) => x.normalizedSource === evt.data.source)!
-                  .status = ParseFileEventFileStatusMapping[evt.event];
+                const parsingFile = draft.task!.files.find((x) => x.normalizedSource === evt.data.source)!;
+                if (evt.data.target) {
+                  parsingFile.normalizedTarget = evt.data.target;
+                }
+                parsingFile.status = ParseFileEventFileStatusMapping[evt.event];
               }));
             }
           }

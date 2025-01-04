@@ -15,6 +15,7 @@ export type NewTask = {
 
 export type TaskFile = NewTaskFile & {
   normalizedSource: string;
+  normalizedTarget?: string;
   status: 'not-started' | 'parsing' | 'completed' | 'failed';
 };
 

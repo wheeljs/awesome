@@ -1,6 +1,6 @@
 import { For, Show } from 'solid-js';
 
-import { type Task } from './types';
+import { type TaskFile, type Task } from './types';
 
 import './CompletedTask.scss';
 
@@ -9,6 +9,10 @@ export type CompletedTaskProps = {
 };
 
 export function CompletedTaskComponent(props: CompletedTaskProps) {
+  const target = (item: TaskFile) => {
+    return item.normalizedTarget ?? item.target;
+  }
+
   return (
     <div class="completed-task">
       Task({props.task.id}) {props.task.status === 'completed' ? 'finished' : 'terminated'}:<br/>
@@ -16,7 +20,7 @@ export function CompletedTaskComponent(props: CompletedTaskProps) {
       <ul>
         <For each={props.task.files}>
           {(item) => (
-            <li>{item.source}<Show when={item.target}> &gt;&gt; {item.target}</Show></li>
+            <li>{item.normalizedSource}<Show when={target(item)}> &gt;&gt; {target(item)}</Show></li>
           )}
         </For>
       </ul>
