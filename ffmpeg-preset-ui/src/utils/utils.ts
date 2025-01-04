@@ -10,5 +10,5 @@ export function ensureUnixPath(path: string): string {
   }
 
   const [driver, tail] = path.split(':\\');
-  return `/${driver.toLocaleLowerCase()}/${normalizeUnixPath(tail.replaceAll('\\', '/'))}`;
+  return `/${driver.toLocaleLowerCase()}/${tail.replaceAll('\\', '/')}`;
 }
