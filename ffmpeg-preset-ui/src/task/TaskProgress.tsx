@@ -18,7 +18,6 @@ export function TaskProgress(props: TaskProgressProps) {
 
   const files = createMemo(() => {
     const groupedFiles = groupBy(props.runningTask.task?.files, x => x.status);
-    console.log(groupedFiles);
     return {
       statusFiles: groupedFiles,
       parsingFile: props.runningTask.task?.files?.find?.((x) => x.status === 'parsing'),
