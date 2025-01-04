@@ -168,8 +168,7 @@ function convert_file() {
     sync_timestamps "$input_path" "$output_path"
 
     # 保存转换信息
-    conversion_info+=("Input: $input_path, Size: $input_size_hr MB")
-    conversion_info+=("Output: $output_path, Size: $output_size_hr MB, $size_difference MB smaller than origin")
+    conversion_info+=("Input: $input_path, Size: $input_size_hr MB  ===> Output: $output_path, Size: $output_size_hr MB, $size_difference MB smaller than origin")
     conversion_info+=("")
   else
     echo "Converted failed: $input_path ===> $output_path"
