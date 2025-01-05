@@ -3,9 +3,10 @@ use serde::{Serialize, Deserialize};
 use regex::Regex;
 use once_cell::sync::Lazy;
 
-use super::utils::deserialize_files;
-
+pub mod commands;
 pub mod parse;
+pub mod utils;
+use utils::deserialize_files;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]

@@ -1,9 +1,12 @@
-use tauri::Wry;
-use tauri_plugin_shell::Shell;
+use tauri::{async_runtime, Manager, Wry, Window, WindowEvent};
+use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
+use tauri_plugin_shell::{ShellExt, Shell};
 use serde::{Deserialize, Deserializer};
 use base64::{Engine as _, engine::general_purpose};
 use uuid::Uuid;
 use chrono::{NaiveTime, ParseResult, Timelike};
+
+use super::commands::RunningTasks;
 
 pub fn deserialize_files<'de, D>(deserializer: D) -> Result<Vec<(String, Option<String>)>, D::Error>
 where
@@ -68,6 +71,50 @@ where
 
     #[cfg(not(windows))]
     false
+}
+
+pub fn kill_tasks_on_window_close_requested(window: &Window, event: &WindowEvent) {
+    match event {
+        WindowEvent::CloseRequested { api, .. } => {
+            let running_tasks_state = window.state::<RunningTasks>();
+            match running_tasks_state.inner().lock() {
+                Ok(running_tasks) => {
+                    if !running_tasks.is_empty() {
+                        let user_result = window.dialog()
+                            .message("You have running parsing task, close application will stop parsing and leave target file in middle state. Are you sure to TERMINATE parsing and exit?")
+                            .title("Confirm")
+                            .buttons(MessageDialogButtons::OkCancelCustom(
+                                String::from("Terminate and Exit"),
+                                String::from("Cancel")
+                            ))
+                            .blocking_show();
+
+                        if !user_result {
+                            return api.prevent_close();
+                        }
+
+                        let result = async_runtime::block_on(async move {
+                            kill_tasks(
+                                window.shell(),
+                                running_tasks
+                                    .iter()
+                                    .map(|task| task.pid.to_string())
+                                    .collect::<Vec<String>>(),
+                            )
+                            .await
+                        });
+                        if !result {
+                            api.prevent_close();
+                        }
+                    }
+                }
+                Err(_) => {
+                    api.prevent_close();
+                }
+            }
+        }
+        _ => {}
+    }
 }
 
 const TIME_FORMAT: &str = "%H:%M:%S%.f";

@@ -2,7 +2,7 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 
 use super::{ParseEvent, ParseFileEventPayload, Summary};
-use super::super::utils;
+use super::utils;
 
 static DURATION_LINE_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"Duration:(.*),\sstart").unwrap());
