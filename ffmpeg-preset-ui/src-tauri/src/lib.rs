@@ -3,8 +3,9 @@ use serde::Deserialize;
 use tauri::{
     async_runtime,
     ipc::Channel,
+    plugin::TauriPlugin,
     window::{ProgressBarState, ProgressBarStatus},
-    AppHandle, Builder, Manager, State, UserAttentionType, WebviewWindow, WindowEvent,
+    AppHandle, Builder, Manager, State, UserAttentionType, WebviewWindow, WindowEvent, Wry,
 };
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
 use tauri_plugin_shell::{ShellExt, process::CommandEvent};
@@ -205,11 +206,26 @@ async fn start_parse(
     Ok(())
 }
 
+#[cfg(debug_assertions)]
+fn prevent_default() -> TauriPlugin<Wry> {
+    use tauri_plugin_prevent_default::Flags;
+
+    tauri_plugin_prevent_default::Builder::new()
+        .with_flags(Flags::all().difference(Flags::DEV_TOOLS | Flags::RELOAD))
+        .build()
+}
+
+#[cfg(not(debug_assertions))]
+fn prevent_default() -> TauriPlugin<Wry> {
+    tauri_plugin_prevent_default::init()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(prevent_default())
         .plugin(tauri_plugin_shell::init())
         .manage(RunningTasks::default())
         .setup(move |app| {
