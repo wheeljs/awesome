@@ -209,6 +209,7 @@ async fn start_parse(
 pub fn run() {
     Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())
         .manage(RunningTasks::default())
         .setup(move |app| {

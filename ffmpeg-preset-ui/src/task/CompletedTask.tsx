@@ -1,6 +1,7 @@
 import { For, Show } from 'solid-js';
 
 import { type TaskFile, type Task } from './types';
+import { RevealFile } from '../components/RevealFile';
 
 import './CompletedTask.scss';
 
@@ -21,11 +22,11 @@ function CompletedTaskFile(props: CompletedFileProps) {
 
   return (
     <>
-      {item().normalizedSource}
+      <RevealFile file={item().normalizedSource} />
       <Show when={item().sourceSize}> ({item().sourceSize})</Show>
       <Show when={target(item())}>
         {' '}
-        &gt;&gt; {target(item())}
+        &gt;&gt; <RevealFile file={target(item())!} />
         <Show when={item().targetSize}> ({item().targetSize})</Show>
       </Show>
       <Show when={item().reduceSize}> -{item().reduceSize}</Show>
