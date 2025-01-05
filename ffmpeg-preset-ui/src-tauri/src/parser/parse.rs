@@ -95,7 +95,9 @@ pub fn try_converting_line(line: &str) -> Option<ConvertStatusLine> {
     None
 }
 
-static SUMMARY_LINE_REG: Lazy<Regex> = Lazy::new(|| Regex::new(r"Input:\s*(?<source>[^\n,]+),\s*Size:\s*(?<source_size>[\d.]+\s*MB)\s*===>\s*Output:\s*(?<target>[^\n,]+),\s*Size:\s*(?<target_size>[\d.]+\s*MB),\s*(?<reduce_size>[\d.]+\s*MB)\s*smaller\s*than\s*origin").unwrap());
+static SUMMARY_LINE_REG: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"Input:\s*(?<source>[^\n,]+),\s*Size:\s*(?<source_size>[\d.]+\s*MB)\s*===>\s*Output:\s*(?<target>[^\n,]+),\s*Size:\s*(?<target_size>[\d.]+\s*MB),\s*(?<reduce_size>[\d.]+\s*MB)\s*smaller\s*than\s*origin").unwrap()
+});
 
 pub fn try_summary_line(line: &str) -> Option<Summary> {
     if !SUMMARY_LINE_REG.is_match(line) {

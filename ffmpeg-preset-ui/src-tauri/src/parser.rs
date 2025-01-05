@@ -137,7 +137,11 @@ pub enum ParseEvent<'a> {
     #[serde(rename_all = "camelCase")]
     PercentProgress { id: &'a str, percent: u8 },
     #[serde(rename_all = "camelCase")]
-    Finished { id: &'a str, success: bool, summaries: Vec<Summary> },
+    Finished {
+        id: &'a str,
+        success: bool,
+        summaries: Vec<Summary>,
+    },
     #[serde(rename_all = "camelCase")]
     StartParseFile(ParseFileEventPayload<'a>),
     #[serde(rename_all = "camelCase")]
