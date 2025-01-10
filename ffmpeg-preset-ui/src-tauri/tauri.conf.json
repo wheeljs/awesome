@@ -12,9 +12,11 @@
   "app": {
     "windows": [
       {
+        "decorations": false,
         "title": "FFmpeg Preset",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "backgroundColor": "#c0c0c0"
       }
     ],
     "security": {
