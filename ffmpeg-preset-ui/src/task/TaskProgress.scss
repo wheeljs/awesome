@@ -5,6 +5,7 @@
   .progress-indicator {
     flex: 1 1;
     overflow: hidden;
+    user-select: none;
   
     &-wrapper {
       padding: 0;
