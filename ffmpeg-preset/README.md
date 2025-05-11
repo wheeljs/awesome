@@ -2,7 +2,7 @@
 
 调用ffmpeg进行视频压缩，支持一些常见参数，具体参见源码
 
-## Prerequests
+## Prerequisites
 
 - FFmpeg for windows
 
