@@ -1,0 +1,6 @@
+@use '../../components/BrowseInput.scss' as browseInput;
+
+.target-input {
+  width: 100%;
+  @include browseInput.input-wrapper();
+}

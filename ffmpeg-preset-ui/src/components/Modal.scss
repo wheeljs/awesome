@@ -1,0 +1,23 @@
+.modal {
+  &__backdrop {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 100;
+  }
+
+  & {
+    width: 60%;
+  }
+}
+
+.window-body__content {
+  margin-bottom: 8px;
+  line-height: 1.5;
+}

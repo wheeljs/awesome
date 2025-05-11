@@ -144,10 +144,15 @@ function convert_file() {
 
   ffmpeg_command="$ffmpeg_command \"$output_path\""
 
+  echo ""
+  echo "Converting $input_path ===> $output_path"
+
   eval $ffmpeg_command
 
   # 检查 ffmpeg 是否执行成功
   if [ $? -eq 0 ]; then
+    echo "Converted success: $input_path ===> $output_path"
+
     # 获取转换前后的文件大小
     local input_size=$(get_file_size "$input_path")
     local output_size=$(get_file_size "$output_path")
@@ -163,10 +168,10 @@ function convert_file() {
     sync_timestamps "$input_path" "$output_path"
 
     # 保存转换信息
-    conversion_info+=("Input: $input_path, Size: $input_size_hr MB")
-    conversion_info+=("Output: $output_path, Size: $output_size_hr MB, $size_difference MB smaller than origin")
+    conversion_info+=("Input: $input_path, Size: $input_size_hr MB  ===> Output: $output_path, Size: $output_size_hr MB, $size_difference MB smaller than origin")
     conversion_info+=("")
   else
+    echo "Converted failed: $input_path ===> $output_path"
     # 保存转换失败信息
     conversion_info+=("Error converting $input_path to $output_path")
     conversion_info+=("")

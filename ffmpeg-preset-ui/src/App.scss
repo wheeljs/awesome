@@ -1,0 +1,35 @@
+@import 'normalize.css';
+@import '98.css';
+
+@mixin reset-font() {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+}
+
+.modal .window-body, button, input, label, option, select, table, textarea, ul.tree-view {
+  @include reset-font();
+}
+
+.window {
+  .title-bar {
+    user-select: none;
+  }
+
+  .title-bar-text {
+    pointer-events: none;
+  }
+}
+
+.win-98 {
+  @include reset-font();  
+
+  button.only-icon {
+    padding-right: 4px;
+    padding-left: 4px;
+    min-width: unset;
+  }
+
+  button svg.solid-fa {
+    color: initial;
+  }
+}

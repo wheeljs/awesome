@@ -1,0 +1,21 @@
+.completed-task {
+  padding: 8px 0;
+  line-height: 1.5;
+  border-bottom: 1px solid #cccccc;
+
+  ul {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-left: 0;
+    
+
+    li {
+      padding: 4px 0;
+      list-style-position: inside;
+
+      &:last-child {
+        padding-bottom: 0;
+      }
+    }
+  }
+}
