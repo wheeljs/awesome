@@ -2,15 +2,21 @@
 
 # 用户自定义参数
 TARGET_DIR="/i/相声Audio" # 输出目录
-FFMPEG_BIN="$(which ffmpeg)" # 自动查找 ffmpeg 路径（也可手动填写）
 
-# 也可手动指定，比如：
-# FFMPEG_BIN="/usr/local/bin/ffmpeg"
-# FFMPEG_BIN="/c/ffmpeg/bin/ffmpeg.exe"  # Windows Git Bash 示例
+# 解析脚本真实路径（跟随符号链接），得到脚本所在目录 SCRIPT_DIR
+SCRIPT_SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SCRIPT_SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SCRIPT_SOURCE")" >/dev/null 2>&1 && pwd)"
+  SCRIPT_SOURCE="$(readlink "$SCRIPT_SOURCE")"
+  # 如果 readlink 返回的是相对路径，则补回原目录
+  [[ "$SCRIPT_SOURCE" != /* ]] && SCRIPT_SOURCE="$DIR/$SCRIPT_SOURCE"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SCRIPT_SOURCE")" >/dev/null 2>&1 && pwd)"
 
-# 检查 ffmpeg 是否存在
-if [[ ! -x "$FFMPEG_BIN" ]]; then
-  echo "❌ 未找到 ffmpeg 可执行文件，请检查 FFMPEG_BIN 设置"
+# 使用真实脚本目录去引用公共查找脚本
+source "$SCRIPT_DIR/find-ffmpeg.bash"
+if ! find_ffmpeg; then
+  echo "❌ 未找到 ffmpeg 可执行文件，请检查 PATH 或设置 FFMPEG_PATH 环境变量"
   exit 1
 fi
 

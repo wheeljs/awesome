@@ -1,5 +1,22 @@
 #!/bin/bash
 
+# 解析脚本真实路径（跟随符号链接），得到脚本所在目录 SCRIPT_DIR
+SCRIPT_SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SCRIPT_SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SCRIPT_SOURCE")" >/dev/null 2>&1 && pwd)"
+  SCRIPT_SOURCE="$(readlink "$SCRIPT_SOURCE")"
+  # 如果 readlink 返回的是相对路径，则补回原目录
+  [[ "$SCRIPT_SOURCE" != /* ]] && SCRIPT_SOURCE="$DIR/$SCRIPT_SOURCE"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SCRIPT_SOURCE")" >/dev/null 2>&1 && pwd)"
+
+# 使用真实脚本目录去引用公共查找脚本
+source "$SCRIPT_DIR/find-ffmpeg.bash"
+if ! find_ffmpeg; then
+  echo "请确保系统 PATH 中包含 ffmpeg，或设置 FFMPEG_PATH 环境变量指向 ffmpeg 可执行文件或目录"
+  exit 1
+fi
+
 # 显示帮助信息
 function show_help() {
   cat <<EOF
@@ -120,7 +137,7 @@ function convert_file() {
 
   echo -ne "\033]0;Converting $input_path...\007"
 
-  local ffmpeg_command="./ffmpeg.exe -i \"$input_path\" -b:v $bitrate -map_metadata 0"
+  local ffmpeg_command="$FFMPEG_BIN -i \"$input_path\" -b:v $bitrate -map_metadata 0"
 
   # 检查输入文件是否为 WMV 格式
   local decoder="h264_cuvid"
@@ -131,7 +148,7 @@ function convert_file() {
   esac
 
   if [ "$use_gpu" = true ]; then
-    ffmpeg_command="./ffmpeg.exe -vsync 0 -hwaccel cuvid -c:v $decoder -i \"$input_path\" -c:a copy -c:v h264_nvenc -b:v $bitrate -vbr 1 -map_metadata 0"
+    ffmpeg_command="$FFMPEG_BIN -vsync 0 -hwaccel cuvid -c:v $decoder -i \"$input_path\" -c:a copy -c:v h264_nvenc -b:v $bitrate -vbr 1 -map_metadata 0"
   fi
 
   if [ -n "$resize" ]; then
@@ -245,12 +262,6 @@ shift $((OPTIND - 1))
 # 如果没有传入参数，提示用户并退出
 if [ $args -eq 0 ]; then
   show_help
-  exit 1
-fi
-
-# 判断ffmpeg.exe是否存在
-if [ ! -f ./ffmpeg.exe ]; then
-  echo "请确保当前目录下存在ffmpeg.exe"
   exit 1
 fi
 
