@@ -191,7 +191,7 @@ export function CreateTask(props: CreateTaskProps) {
               ],
             }}
             onChange={(value) => updator('bashFile', value)}
-            onChooseFile={(value) => updator('command', value as string) }
+            onChooseFile={(value) => updator('bashFile', value as string) }
           />
         </div>
         <div class="create-task-form__options">
