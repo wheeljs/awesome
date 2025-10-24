@@ -34,7 +34,7 @@ function show_help() {
   $(basename "$0") --gpu --bitrate 2M video1.mp4:output1.mp4 video2.mp4:output2.mp4
   $(basename "$0") --gpu --output-dir /path/to/output video1.mp4 video2.mp4
   $(basename "$0") --gpu --resize 1280x720 video1.mp4 video2.mp4
-  $(basename "$0") --gpu  --resize 1440:-1 video1.mp4 video2.mp4
+  $(basename "$0") --gpu --resize 1440:-1 video1.mp4 video2.mp4
 EOF
 }
 
