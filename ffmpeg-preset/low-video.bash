@@ -94,6 +94,8 @@ function convert_file() {
   local output_path=$2
   local output_dir=$3
   local output_path_ready=false
+
+  # 判断输出路径是否已有扩展名
   if [[ "$output_path" =~ \..+$ ]]; then
     output_path_ready=true
   fi
@@ -102,31 +104,33 @@ function convert_file() {
   local filename=$(basename "$input_path")
   local extension="${filename##*.}"
 
+  # 如果指定了输出目录
   if [ -d "$output_dir" ]; then
     output_dir="${output_dir%\/}"
-    # output_path不为空且仅有文件名（不包含/）
+    # output_path 不为空且仅有文件名（不包含 / 或 \）
     if [[ -n "$output_path" && ! "$output_path" =~ [/\\] ]]; then
       output_path="$output_dir/$output_path"
       output_path_ready=true
-    # output_path为空，使用output_dir作为目录
+    # output_path 为空，使用 output_dir 作为目录
     elif [ -z "$output_path" ]; then
       output_path=$output_dir
     fi
   fi
 
-  # 如果output_path仅有文件名部分（不包含/），不支持这种format
+  # 如果 output_path 仅有文件名部分（不包含 /），不支持这种格式
   if [[ -n "$output_path" && ! "$output_path" =~ [/\\] ]]; then
     echo "Unsupport format: $input_path:$output_path"
     return -1
   fi
-  # 如果output_path为空，生成到input_path同样的目录
+
+  # 如果 output_path 为空，生成到 input_path 同目录
   if [ -z "$output_path" ]; then
     output_path="$input_dir"
   fi
   output_path="${output_path%\/}"
 
+  # 处理 m3u8 文件输出为完整 mp4
   if [ "$output_path_ready" == false ]; then
-    # 如果是 .m3u8 文件且 keep_m3u8=false，则更改为 .mp4
     if [[ "$extension" == "m3u8" && "$keep_m3u8" == false ]]; then
       output_path="$output_path/${filename%.*}.low.mp4"
     else
@@ -137,34 +141,82 @@ function convert_file() {
 
   echo -ne "\033]0;Converting $input_path...\007"
 
-  local ffmpeg_command="$FFMPEG_BIN -i \"$input_path\" -b:v $bitrate -map_metadata 0"
+  # 准备 ffprobe 路径（使用 ffmpeg 同目录下的 ffprobe）
+  local ffprobe_bin="$(dirname "$FFMPEG_BIN")/ffprobe"
 
-  # 检查输入文件是否为 WMV 格式
+  # 获取源视频编码信息
+  local src_codec
+  src_codec=$("$ffprobe_bin" -v error -select_streams v:0 -show_entries stream=codec_name \
+    -of default=nokey=1:noprint_wrappers=1 "$input_path")
+
+  # 设置 decoder 默认值
   local decoder="h264_cuvid"
   case "$input_path" in
     *.wmv)
       decoder="vc1_cuvid"
       ;;
+    *.hevc|*.h265)
+      decoder="hevc_cuvid"
+      ;;
+    *.vp9)
+      decoder="vp9_cuvid"
+      ;;
+    # 可以继续根据需要扩展更多格式
   esac
 
+  # 初始化 ffmpeg 参数数组
+  local ffmpeg_args=()
+
   if [ "$use_gpu" = true ]; then
-    ffmpeg_command="$FFMPEG_BIN -vsync 0 -hwaccel cuvid -c:v $decoder -i \"$input_path\" -c:a copy -c:v h264_nvenc -b:v $bitrate -vbr 1 -map_metadata 0"
+    # 使用 GPU decode + NVENC encode，目标编码与源一致
+    ffmpeg_args+=("-vsync" "0")
+    ffmpeg_args+=("-hwaccel" "cuda")
+    ffmpeg_args+=("-hwaccel_output_format" "cuda")
+    ffmpeg_args+=("-c:v" "$decoder")
+    ffmpeg_args+=("-i" "$input_path")
+    ffmpeg_args+=("-c:a" "copy")
+
+    # 如果源编码是 h264 或 hevc，则使用对应 NVENC 编码器
+    case "$src_codec" in
+      h264)
+        ffmpeg_args+=("-c:v" "h264_nvenc")
+        ;;
+      hevc)
+        ffmpeg_args+=("-c:v" "hevc_nvenc")
+        ;;
+      *)
+        ffmpeg_args+=("-c:v" "h264_nvenc")  # 默认 fallback
+        ;;
+    esac
+
+    # 设置比特率
+    ffmpeg_args+=("-b:v" "$bitrate")
+    ffmpeg_args+=("-map_metadata" "0")
+  else
+    # CPU 转码
+    ffmpeg_args+=("-i" "$input_path")
+    ffmpeg_args+=("-b:v" "$bitrate")
+    ffmpeg_args+=("-map_metadata" "0")
   fi
 
+  # 调整分辨率
   if [ -n "$resize" ]; then
     if [ "$use_gpu" = true ]; then
-      ffmpeg_command="$ffmpeg_command -vf 'hwdownload,format=nv12,scale=$resize'"
+      ffmpeg_args+=("-vf" "scale_cuda=$resize")
     else
-      ffmpeg_command="$ffmpeg_command -vf scale=$resize"
+      ffmpeg_args+=("-vf" "scale=$resize")
     fi
   fi
 
-  ffmpeg_command="$ffmpeg_command \"$output_path\""
+  # 输出文件
+  ffmpeg_args+=("$output_path")
 
   echo ""
   echo "Converting $input_path ===> $output_path"
+  echo "$FFMPEG_BIN ${ffmpeg_args[*]}"
 
-  eval $ffmpeg_command
+  # 执行 ffmpeg 命令
+  "$FFMPEG_BIN" "${ffmpeg_args[@]}"
 
   # 检查 ffmpeg 是否执行成功
   if [ $? -eq 0 ]; then
@@ -189,7 +241,6 @@ function convert_file() {
     conversion_info+=("")
   else
     echo "Converted failed: $input_path ===> $output_path"
-    # 保存转换失败信息
     conversion_info+=("Error converting $input_path to $output_path")
     conversion_info+=("")
   fi

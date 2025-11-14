@@ -7,11 +7,10 @@ function find_ffmpeg() {
   if command -v ffmpeg >/dev/null 2>&1; then
     FFMPEG_BIN=$(command -v ffmpeg)
     export FFMPEG_BIN
-    return 0
   fi
 
   # 2) 使用环境变量 FFMPEG_PATH（支持目录或直接可执行路径）
-  if [ -n "$FFMPEG_PATH" ]; then
+  if [ -z "$FFMPEG_BIN" ] && [ -n "$FFMPEG_PATH" ]; then
     candidate="$FFMPEG_PATH"
     # 如果是目录，尝试拼接常见可执行名
     if [ -d "$candidate" ]; then
@@ -31,9 +30,30 @@ function find_ffmpeg() {
         FFMPEG_BIN="$candidate"
       fi
       export FFMPEG_BIN
-      return 0
     fi
   fi
 
-  return 1
+  # 如果没有找到 ffmpeg，则返回失败
+  if [ -z "$FFMPEG_BIN" ]; then
+    return 1
+  fi
+
+  # 查找 ffprobe（同目录下，支持 Windows）
+  local ffprobe_candidate="$(dirname "$FFMPEG_BIN")/ffprobe"
+  if [ -x "$ffprobe_candidate" ]; then
+    FFPROBE_BIN="$ffprobe_candidate"
+  elif [ -x "${ffprobe_candidate}.exe" ]; then
+    FFPROBE_BIN="${ffprobe_candidate}.exe"
+  else
+    # 兜底：尝试 PATH
+    if command -v ffprobe >/dev/null 2>&1; then
+      FFPROBE_BIN=$(command -v ffprobe)
+    else
+      echo "Warning: ffprobe not found, some operations may fail."
+      FFPROBE_BIN=""
+    fi
+  fi
+  export FFPROBE_BIN
+
+  return 0
 }

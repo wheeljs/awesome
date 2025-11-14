@@ -14,7 +14,7 @@ Prerequisites and Setup are different depending on which bash you want to use.
 
 - Cuda(without this, you cannot enable `--gpu`)
 
-*Windows 10 22H2 + git 2.44.0.windows.1 + ffmpeg full 4.4.1 build + Cuda 12.2 was tested*
+*Windows 11 24H2 + git version 2.51.1.windows.1 + ffmpeg-n8.0-latest-win64-gpl-8.0*
 
 ## Setup
 
