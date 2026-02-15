@@ -323,6 +323,8 @@ for arg in "$@"; do
 done
 
 # 输出所有文件的转换信息
+echo ""
+echo ""
 echo "Conversion Summary:"
 for info in "${conversion_info[@]}"; do
   echo "$info"
