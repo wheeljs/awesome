@@ -1,0 +1,29 @@
+{
+  "name": "yakuza-calendar",
+  "version": "0.1.0",
+  "description": "DRAGON CALENDAR (Like a Dragon) | SEGA",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev --env dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wheeljs/awesome.git"
+  },
+  "keywords": [
+    "Like a Dragon"
+  ],
+  "author": "WheelJS",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wheeljs/awesome/issues"
+  },
+  "homepage": "https://github.com/wheeljs/awesome/tree/main/yakuza-calendar/README.md",
+  "dependencies": {
+    "ics": "^3.8.1"
+  },
+  "devDependencies": {
+    "wrangler": "^4.65.0"
+  }
+}

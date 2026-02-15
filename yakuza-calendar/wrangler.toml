@@ -1,0 +1,12 @@
+name = "yakuza-calendar"
+main = "src/index.js"
+compatibility_date = "2026-02-14"
+compatibility_flags = ["nodejs_compat"]
+
+workers_dev = true
+
+[vars]
+ENVIRONMENT = "production"
+
+[env.dev]
+vars = { ENVIRONMENT = "development" }
