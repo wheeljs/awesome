@@ -1,4 +1,4 @@
-import { BrowserWindow, dialog, OpenDialogReturnValue, type IpcMainInvokeEvent, type OpenDialogOptions } from 'electron';
+import { BrowserWindow, dialog, type OpenDialogReturnValue, type IpcMainInvokeEvent, type OpenDialogOptions } from 'electron';
 
 const DialogOptionsByType: Record<string, OpenDialogOptions> = {
     Bash: {

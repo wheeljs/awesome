@@ -1,4 +1,4 @@
-import { type Summary, type ParseOptions } from '../src-electron/parser';
+import { type Summary, type ParseOptions } from '../main/parser';
 
 export type TaskOptions = {
   need_std_output?: boolean;

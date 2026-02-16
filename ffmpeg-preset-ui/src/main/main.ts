@@ -1,12 +1,17 @@
 import path from 'path';
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import { spawn } from 'child_process';
+import started from 'electron-squirrel-startup';
 
 import { handler } from './chooseFile';
 import { buildParseCommand, tryConvertingLine, tryDurationLine, tryPercentLine, trySummaryLine, Summary } from './parser';
 import { generateUuid, killTasks, killTasksOnWindowCloseRequested } from './utils';
 import { ParseTask } from './types';
 import type { StartParseResult, StartParsePayload } from '../shared/types';
+
+if (started) {
+  app.quit();
+}
 
 const runningTasks = new Map<string, ParseTask>();
 
@@ -18,7 +23,7 @@ function createWindow() {
     height: 600,
     backgroundColor: '#c0c0c0',
     webPreferences: {
-      preload: path.join(__dirname, 'preload.cjs'),
+      preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
     },
   });
@@ -27,10 +32,10 @@ function createWindow() {
     killTasksOnWindowCloseRequested(win, event, runningTasks);
   });
 
-  const devUrl = process.env.VITE_DEV_SERVER_URL || `http://localhost:${process.env.VITE_PORT || 8080}`;
-  if (process.env.NODE_ENV === 'development' || devUrl) {
+  // const devUrl = process.env.VITE_DEV_SERVER_URL || `http://localhost:${process.env.VITE_PORT || 8080}`;
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     try {
-      win.loadURL(devUrl as string);
+      win.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
       win.webContents.openDevTools();
       return;
     } catch (e) {

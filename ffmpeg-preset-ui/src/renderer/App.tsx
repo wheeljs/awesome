@@ -1,5 +1,5 @@
-import { TauriWindow as Window } from './components/TauriWindow.tsx';
-import { Task } from './task/index.tsx';
+import { TauriWindow as Window } from './components/TauriWindow';
+import { Task } from './task/index';
 import './App.scss';
 
 function App() {
