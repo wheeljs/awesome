@@ -1,4 +1,3 @@
-import { revealItemInDir } from '@tauri-apps/plugin-opener';
 import { Fa } from 'solid-fa';
 import { faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 
@@ -13,7 +12,7 @@ type RevealFileProps = {
 export function RevealFile(props: RevealFileProps) {
   const onClick = (event: Event) => {
     event.preventDefault();
-    revealItemInDir(restoreUnixPath(props.file));
+    window.electronAPI.showItemInFolder(restoreUnixPath(props.file));
   };
 
   return (<span class="reveal-file" onClick={onClick}><a>{props.file}</a><Fa icon={faUpRightFromSquare} /></span>);

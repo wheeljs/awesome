@@ -1,7 +1,6 @@
 import { splitProps, type JSX } from 'solid-js';
 import { Fa } from 'solid-fa';
 import { faFolderOpen } from '@fortawesome/free-regular-svg-icons';
-import { open, type OpenDialogOptions } from '@tauri-apps/plugin-dialog';
 
 import './BrowseInput.scss';
 
@@ -15,7 +14,8 @@ type BrowseFileButtonProps = {
 };
 
 interface BrowseInputProps extends Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
-  fileBrowseProps?: OpenDialogOptions & {
+  fileBrowseProps: {
+    type: string;
     button?: BrowseFileButtonProps;
   };
   renderSuffix?: () => JSX.Element;
@@ -49,7 +49,8 @@ export function BrowseInput(props: BrowseInputProps) {
   };
 
   const handleBrowse = () => {
-    open(props.fileBrowseProps)
+    const { button, ...fileDialogOptions } = props.fileBrowseProps || {};
+    window.electronAPI.chooseFile(fileDialogOptions)
       .then((result) => {
         if (result) {
           props.onChooseFile(result);

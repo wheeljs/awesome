@@ -1,0 +1,247 @@
+import path from 'path';
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { spawn } from 'child_process';
+
+import { handler } from './chooseFile';
+import { buildParseCommand, tryConvertingLine, tryDurationLine, tryPercentLine, trySummaryLine, Summary } from './parser';
+import { generateUuid, killTasks, killTasksOnWindowCloseRequested } from './utils';
+import { ParseTask } from './types';
+import type { StartParseResult, StartParsePayload } from '../shared/types';
+
+const runningTasks = new Map<string, ParseTask>();
+
+function createWindow() {
+  const win = new BrowserWindow({
+    title: 'FFmpeg Preset',
+    titleBarStyle: 'hidden',
+    width: 800,
+    height: 600,
+    backgroundColor: '#c0c0c0',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.cjs'),
+      contextIsolation: true,
+    },
+  });
+
+  win.on('close', (event) => {
+    killTasksOnWindowCloseRequested(win, event, runningTasks);
+  });
+
+  const devUrl = process.env.VITE_DEV_SERVER_URL || `http://localhost:${process.env.VITE_PORT || 8080}`;
+  if (process.env.NODE_ENV === 'development' || devUrl) {
+    try {
+      win.loadURL(devUrl as string);
+      win.webContents.openDevTools();
+      return;
+    } catch (e) {
+      // fallthrough to load file
+    }
+  }
+
+  win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
+}
+
+app.whenReady().then(() => {
+  createWindow();
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
+});
+
+ipcMain.handle('request-maximize', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win.isMaximized()) {
+    return win.unmaximize();
+  }
+
+  win.maximize();
+});
+
+ipcMain.handle('request-minimize', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+
+  win.minimize();
+});
+
+ipcMain.handle('request-close', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+
+  win.close();
+});
+
+ipcMain.handle('choose-file', handler);
+
+ipcMain.handle('show-item-in-folder', async (_event, { path }: { path: string; }) => {
+  shell.showItemInFolder(path);
+});
+
+ipcMain.handle('start-parse', async (event, { options, taskOptions }: StartParsePayload): Promise<StartParseResult> => {
+  const browserWindow = BrowserWindow.fromWebContents(event.sender);
+
+  const id = generateUuid();
+  const parseCommand = buildParseCommand(options);
+
+  // Create shell invocation similar to original: --login -c "<args...>"
+  const args = ['--login', '-c', parseCommand.args.join(' ')];
+  const child = spawn(parseCommand.command, args, { stdio: ['pipe', 'pipe', 'pipe'] });
+
+  const parseTask = {
+    duration: 0,
+    percent: 0,
+    process: child,
+  };
+  runningTasks.set(id, parseTask);
+
+  // Send Started
+  event.sender.send('parse-event', {
+    event: 'started',
+    data: { id },
+  });
+
+  const summaries: Summary[] = [];
+
+  child.stdout.on('data', (chunk: Buffer) => {
+    const text = chunk.toString();
+    const lines = text.split(/\r?\n/);
+    for (const line of lines) {
+      if (!line) {
+        continue;
+      }
+
+      const conv = tryConvertingLine(line);
+      if (conv) {
+        if (conv.type === 'started') {
+          event.sender.send('parse-event', {
+            event: 'startParseFile',
+            data: {
+              id,
+              source: conv.input,
+              target: conv.output,
+            },
+          });
+        } else if (conv.type === 'succeed') {
+          event.sender.send('parse-event', {
+            event: 'parseFileSuccess',
+            data: {
+              id,
+              source: conv.input,
+              target: conv.output,
+            },
+          });
+        } else if (conv.type === 'failed') {
+          event.sender.send('parse-event', {
+            event: 'parseFileFailed',
+            data: {
+              id,
+              source: conv.input,
+              target: conv.output,
+            },
+          });
+        }
+      }
+
+      const summary = trySummaryLine(line);
+      if (summary) {
+        summaries.push(summary);
+      }
+
+      if (taskOptions?.need_std_output) {
+        event.sender.send('parse-event', {
+          event: 'stdOutput',
+          data: {
+            id,
+            type: 'stdout',
+            content: line,
+          },
+        });
+      }
+    }
+  });
+
+  child.stderr.on('data', (chunk: Buffer) => {
+    const text = chunk.toString();
+    const lines = text.split(/\r?\n/);
+    for (const line of lines) {
+      if (!line) {
+        continue;
+      }
+
+      const totalDuration = tryDurationLine(line);
+      if (totalDuration !== null) {
+        parseTask.duration = totalDuration;
+      }
+
+      const currentDuration = tryPercentLine(line);
+      if (currentDuration !== null && parseTask.duration !== null) {
+        const percent = Math.round((currentDuration / parseTask.duration) * 100);
+        const pct = Math.min(100, percent);
+        
+        browserWindow?.setProgressBar?.(pct / 100);
+
+        event.sender.send('parse-event', {
+          event: 'percentProgress',
+          data: {
+            id,
+            percent: pct,
+          },
+        });
+      }
+
+      if (taskOptions?.need_std_output) {
+        event.sender.send('parse-event', {
+          event: 'stdOutput',
+          data: {
+            id,
+            type: 'stderr',
+            content: line,
+          },
+        });
+      }
+    }
+  });
+
+  child.on('exit', (code) => {
+    runningTasks.delete(id);
+    browserWindow?.setProgressBar?.(-1);
+    event.sender.send('parse-event', {
+      event: 'finished',
+      data: {
+        id,
+        success: code === 0,
+        summaries,
+      },
+    });
+  });
+
+  return { started: true, id };
+});
+
+ipcMain.handle('terminate-parse', async (_event, { taskId }) => {
+  const parseTask = runningTasks.get(taskId);
+  const proc = parseTask?.process;
+
+  if (!proc) {
+    throw new Error(`Process with taskId ${taskId} not found.`);
+  }
+  if (proc.killed) {
+    throw new Error(`Process with taskId ${taskId} is already terminated.`);
+  }
+
+  try {
+    return killTasks([proc]);
+  } catch (e) {
+    throw new Error(
+      `Failed to terminate process with taskId ${taskId}: ${e instanceof Error ? e.message : String(e)}`,
+      { cause: e }
+    );
+  }
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});

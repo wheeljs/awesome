@@ -7,6 +7,11 @@
 
   > .title-bar {
     flex: 0 0;
+    app-region: drag;
+  }
+
+  > .title-bar .title-bar-controls {
+    app-region: no-drag;
   }
 
   > .window-body {

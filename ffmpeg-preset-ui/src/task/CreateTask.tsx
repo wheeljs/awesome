@@ -1,12 +1,11 @@
-import { For, Show, useContext, createEffect, onMount, onCleanup } from 'solid-js';
+import { For, Show, useContext, createEffect, onMount } from 'solid-js';
 import { createStore, produce, unwrap } from 'solid-js/store';
-import { type UnlistenFn } from '@tauri-apps/api/event';
 import { Fa } from 'solid-fa';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { faCircleQuestion } from '@fortawesome/free-regular-svg-icons';
 import { uniqBy, groupBy, cloneDeep } from 'lodash-es';
 
-import { tauriDragAndDrop } from '../reusables/dragAndDrop';
+import { useFileDrop } from '../reusables/dragAndDrop';
 import type { NewTask, NewTaskFile } from './types';
 import { TaskContext, TaskFileContext } from './context';
 import { loadLatestTaskConfig, saveLatestTaskConfig } from './service';
@@ -96,27 +95,22 @@ export function CreateTask(props: CreateTaskProps) {
     }
   };
 
-  let unlisten: UnlistenFn;
-  tauriDragAndDrop({
-    onDrop: (event) => {
-      if (event.paths.length === 0) {
+  useFileDrop({
+    onFileDrop: (files) => {
+      if (files.length === 0) {
         return;
       }
 
       setNewTask('files', (draft) => uniqBy(
         [
           ...draft,
-          ...event.paths.map((x) => ({
-            source: x,
+          ...files.map((x) => ({
+            source: x.absolutePath,
           })),
         ].filter(validateFileItem),
         'source',
       ));
     },
-  }).then((fn) => unlisten = fn);
-
-  onCleanup(() => {
-    unlisten?.();
   });
 
   const handleSubmit = (event: SubmitEvent) => {
@@ -172,9 +166,9 @@ export function CreateTask(props: CreateTaskProps) {
             type="text"
             value={newTask.command}
             placeholder="/path/to/bash"
-            fileBrowseProps={{title: 'Choose command like bash.exe'}}
+            fileBrowseProps={{ type: 'Bash' }}
             onChange={(value) => updator('command', value) }
-            onChooseFile={(value) => updator('command', value as string) }
+            onChooseFile={(value) => updator('command', Array.isArray(value) ? value[0] : value as string) }
           />
         </div>
         <div class="create-task-form__bash-file">
@@ -184,14 +178,9 @@ export function CreateTask(props: CreateTaskProps) {
             type="text"
             value={newTask.bashFile}
             placeholder="/path/to/low-video.bash(close to ffmpeg.exe)"
-            fileBrowseProps={{
-              title: 'Choose low-video.bash',
-              filters: [
-                {extensions: ['bash'], name: 'low-video.bash'}
-              ],
-            }}
+            fileBrowseProps={{ type: 'LowVideoBash' }}
             onChange={(value) => updator('bashFile', value)}
-            onChooseFile={(value) => updator('bashFile', value as string) }
+            onChooseFile={(value) => updator('bashFile', Array.isArray(value) ? value[0] : value as string) }
           />
         </div>
         <div class="create-task-form__options">
@@ -260,8 +249,7 @@ Choose a directory and fill file name: Target will be destinate to choosed direc
                         type="text"
                         value={item.source}
                         fileBrowseProps={{
-                          title: 'Choose video(s)',
-                          multiple: true,
+                          type: 'Video',
                           button: {
                             mode: 'icon',
                           },

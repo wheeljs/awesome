@@ -19,7 +19,7 @@ export function TargetInput(props: TargetInputProps) {
   const [_, inputProps] = splitProps(props, ['index', 'source', 'onChange']);
 
   const handleChange = (value: string) => {
-    props.onChange(value);
+    props.onChange(Array.isArray(value) ? value[0] : value as string);
   };
 
   const handleChooseFile = (file: string | string[] | null) => {
@@ -47,8 +47,7 @@ export function TargetInput(props: TargetInputProps) {
   return (
     <BrowseInput
       fileBrowseProps={{
-        title: 'Choose target file folder',
-        directory: true,
+        type: 'TargetFolder',
         defaultPath: props.value as string,
         button: {
           mode: 'icon',

@@ -1,42 +1,46 @@
 import { type NewTask, type TaskEvent } from './types';
-import { invoke, Channel } from '@tauri-apps/api/core';
 import { pick } from 'lodash-es';
 
 interface NewTaskInService extends Omit<NewTask, 'files'> {
-  files?: string[][];
+  files: string[][];
 }
 
 type CreateTaskResult = {
-  pending: Promise<void>;
-  channel: Channel<TaskEvent>;
+  pending: Promise<any>;
+  channel: { onmessage: (ev: TaskEvent) => void; close?: () => void };
 };
 
 export function createParseTask(task: NewTask): CreateTaskResult {
   const { files, ...newTask } = task;
+  const newTaskInService = newTask as NewTaskInService;
 
   if (Array.isArray(task.files)) {
-    (newTask as NewTaskInService).files = task.files.map<string[]>(
-      (file) => ([file.source, file.target].filter((x) => x) as string[])
+    newTaskInService.files = task.files.map<string[]>(
+      (file) => ([file.source, file.target] as string[])
     );
+  } else {
+    newTaskInService.files = [];
   }
 
-  const channel = new Channel<TaskEvent>();
-  const pending = invoke<void>('start_parse', {
-    options: newTask,
-    channel,
-    taskOptions: {},
+  // Call Electron main to start parse and subscribe to events via preload bridge
+  const pending = window.electronAPI.startParse(newTaskInService, {});
+
+  const channel = {
+    onmessage: (_: any) => {},
+    _unsub: null as any,
+  } as any;
+
+  channel._unsub = window.electronAPI.onParseEvent((evt) => {
+    channel.onmessage({ event: evt.event, data: evt.data });
   });
 
-  return {
-    pending,
-    channel,
-  };
+  channel.close = () => channel._unsub?.();
+
+  return { pending, channel };
 }
 
 export function terminateParseTask({ taskId }: { taskId: string }): Promise<boolean> {
-  return invoke<boolean>('terminate_parse', {
-    taskId,
-  });
+  return window.electronAPI.terminateParse(taskId);
 }
 
 type LatestTaskConfig = Pick<NewTask, 'command' | 'bashFile' | 'gpu' | 'useResize' | 'resize' | 'bitrate'>;

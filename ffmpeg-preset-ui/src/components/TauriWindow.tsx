@@ -1,5 +1,4 @@
 import { type Component, type JSX, children } from 'solid-js';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 
 import './TauriWindow.scss';
 
@@ -11,20 +10,20 @@ export const TauriWindow: Component<TauriWindowProps> = (props) => {
   const child = children(props.children);
 
   const handleMinimize = () => {
-    getCurrentWindow().minimize();
+    window.electronAPI.requestMinimize();
   };
 
   const handleMaximize = () => {
-    getCurrentWindow().maximize();
+    window.electronAPI.requestMaximize();
   };
 
   const handleClose = () => {
-    getCurrentWindow().close();
+    window.electronAPI.requestClose();
   };
 
   return (
     <div class="window tauri-window">
-      <div data-tauri-drag-region class="title-bar">
+      <div class="title-bar">
         <div class="title-bar-text">FFmpeg Preset</div>
         <div class="title-bar-controls">
           <button aria-label="Minimize" onClick={handleMinimize}></button>
