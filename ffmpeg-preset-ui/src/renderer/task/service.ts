@@ -1,5 +1,8 @@
-import { type NewTask, type TaskEvent } from './types';
 import { pick } from 'lodash-es';
+import { fromEventPattern, share, type Observable } from 'rxjs';
+
+import { type NewTask, type TaskEvent } from './types';
+import { type ParseEventData } from '../../shared/types';
 
 interface NewTaskInService extends Omit<NewTask, 'files'> {
   files: string[][];
@@ -9,6 +12,26 @@ type CreateTaskResult = {
   pending: Promise<any>;
   channel: { onmessage: (ev: TaskEvent) => void; close?: () => void };
 };
+
+let parseEvent$: Observable<ParseEventData>;
+export function subscribeParseEvent() {
+  if (!parseEvent$) {
+    parseEvent$ = fromEventPattern<ParseEventData>(
+      (handler) => {
+        return window.electronAPI.onParseEvent(handler);
+      },
+      (_, unsubscribe) => unsubscribe(),
+    ).pipe(share());
+  }
+
+  return parseEvent$;
+}
+
+export function init() {
+  return {
+    parseEvent$: subscribeParseEvent()
+  };
+}
 
 export function createParseTask(task: NewTask): CreateTaskResult {
   const { files, ...newTask } = task;

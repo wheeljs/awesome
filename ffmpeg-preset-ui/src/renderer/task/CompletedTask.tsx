@@ -22,7 +22,7 @@ function CompletedTaskFile(props: CompletedFileProps) {
 
   return (
     <>
-      <RevealFile file={item().normalizedSource} />
+      <RevealFile file={item().source} />
       <Show when={item().sourceSize}> ({item().sourceSize})</Show>
       <Show when={target(item())}>
         {' '}
