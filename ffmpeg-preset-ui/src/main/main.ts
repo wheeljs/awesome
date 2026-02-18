@@ -1,5 +1,5 @@
 import path from 'path';
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, session, shell } from 'electron';
 import { spawn } from 'child_process';
 import started from 'electron-squirrel-startup';
 
@@ -46,7 +46,12 @@ function createWindow() {
   win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    console.log('If you want to debug solid component, please see https://www.electronjs.org/docs/latest/tutorial/devtools-extension#manually-loading-a-devtools-extension and uncomment below line.');
+    // await session.defaultSession.extensions.loadExtension('path/to/kmcfjchnmmaeeagadbhoofajiopoceel/version');
+  }
+
   createWindow();
 
   app.on('activate', () => {
