@@ -8,10 +8,15 @@ import { FuseV1Options, FuseVersion } from '@electron/fuses';
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    icon: './images/icon',
   },
   rebuildConfig: {},
   makers: [
-    new MakerSquirrel({}),
+    new MakerSquirrel({
+      name: 'FFmpegPreset',
+      iconUrl: 'https://raw.githubusercontent.com/wheeljs/awesome/refs/heads/main/ffmpeg-preset-ui/images/icon.ico',
+      setupIcon: './images/icon.ico',
+    }),
     new MakerZIP({}, ['darwin']),
   ],
   plugins: [
