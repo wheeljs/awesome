@@ -1,5 +1,5 @@
 import path from 'path';
-import { app, BrowserWindow, ipcMain, session, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, session, shell } from 'electron';
 import { spawn } from 'child_process';
 import started from 'electron-squirrel-startup';
 
@@ -12,6 +12,8 @@ import type { StartParseResult, StartParsePayload } from '../shared/types';
 if (started) {
   app.quit();
 }
+
+app.setAppUserModelId("com.squirrel.FFmpegPreset.FFmpegPreset");
 
 const runningTasks = new Map<string, ParseTask>();
 
@@ -43,7 +45,11 @@ function createWindow() {
     }
   }
 
-  win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
+  if (app.isPackaged) {
+    Menu.setApplicationMenu(null);
+  }
+
+  win.loadFile(path.join(__dirname, '..', 'renderer', 'main_window', 'index.html'));
 }
 
 app.whenReady().then(async () => {

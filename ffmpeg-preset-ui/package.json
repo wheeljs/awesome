@@ -1,6 +1,7 @@
 {
   "name": "ffmpeg-preset-ui",
   "version": "0.2.0",
+  "productName": "FFmpeg Preset",
   "description": "UI for FFmpeg Preset",
   "main": ".vite/build/main.js",
   "private": true,
