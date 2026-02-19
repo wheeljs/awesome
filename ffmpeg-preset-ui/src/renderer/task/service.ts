@@ -1,8 +1,8 @@
 import { pick } from 'lodash-es';
 import { fromEventPattern, share, type Observable } from 'rxjs';
 
-import { type NewTask, type TaskEvent } from './types';
-import { type ParseEventData } from '../../shared/types';
+import type { NewTask, TaskEvent } from './types';
+import type { ParseEventData } from '../../shared/types';
 
 interface NewTaskInService extends Omit<NewTask, 'files'> {
   files: string[][];

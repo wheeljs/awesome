@@ -4,9 +4,9 @@ import { spawn } from 'child_process';
 import started from 'electron-squirrel-startup';
 
 import { handler } from './chooseFile';
-import { buildParseCommand, tryConvertingLine, tryDurationLine, tryPercentLine, trySummaryLine, Summary } from './parser';
+import { buildParseCommand, tryConvertingLine, tryDurationLine, tryPercentLine, trySummaryLine, type Summary } from './parser';
 import { generateUuid, killTasks, killTasksOnWindowCloseRequested } from './utils';
-import { ParseTask } from './types';
+import type { ParseTask } from './types';
 import type { StartParseResult, StartParsePayload } from '../shared/types';
 
 if (started) {
