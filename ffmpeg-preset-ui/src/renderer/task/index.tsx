@@ -11,8 +11,11 @@ import { TaskList } from './TaskList';
 export { TaskList };
 import { createParseTask } from './service';
 import { ensureUnixPath } from '../utils/utils';
+import { TaskOptions } from '../../shared/types';
 
 import { TaskProgress } from './TaskProgress';
+
+import './index.scss';
 
 const ParseFileEventFileStatusMapping: Record<
   keyof Pick<TaskEventMap, 'startParseFile' | 'parseFileSuccess' | 'parseFileFailed'>,
@@ -30,10 +33,11 @@ function TaskComponent() {
     percent: 0,
   });
 
+  const [rawTask, setRawTask] = createSignal(false);
   const [taskFinishedSignal, setTaskFinishedSignal] = createSignal(0);
 
-  const onCreate = (createdTask: NewTask) => {
-    const { channel } = createParseTask(createdTask);
+  const onCreate = (createdTask: NewTask, taskOptions: TaskOptions) => {
+    const { channel } = createParseTask(createdTask, taskOptions);
 
     channel.onmessage = (event) => {
       if (!task.task) {
@@ -50,6 +54,9 @@ function TaskComponent() {
           };
           draft.parsing = true;
         }));
+      }
+      if (rawTask() !== taskOptions.raw) {
+        setRawTask(taskOptions.raw);
       }
 
       switch (event.event) {
@@ -101,7 +108,9 @@ function TaskComponent() {
       <div>
         <CreateTask loading={task.parsing} onCreate={onCreate} />
         <Show when={task.parsing}>
-          <TaskProgress runningTask={task} />
+          <Show when={!rawTask} fallback={<div class="task-index__raw-tips">You can see progress from opened shell.</div>}>
+            <TaskProgress runningTask={task} />
+          </Show>
         </Show>
         <TaskList />
       </div>

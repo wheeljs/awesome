@@ -8,16 +8,17 @@ import { uniqBy, groupBy, cloneDeep } from 'lodash-es';
 import { useFileDrop } from '../reusables/dragAndDrop';
 import type { NewTask, NewTaskFile } from './types';
 import { TaskContext, TaskFileContext } from './context';
-import { loadLatestTaskConfig, saveLatestTaskConfig } from './service';
+import { loadLatestConfig, saveLatestTaskConfig } from './service';
 import { BrowseInput } from '../components/BrowseInput';
 import { Modal } from '../components/Modal';
 import { TargetInput } from './components/TargetInput';
+import type { TaskOptions } from '../../shared/types';
 
 import './CreateTask.scss';
 
 export type CreateTaskProps = {
   loading?: boolean;
-  onCreate: (createTask: NewTask) => void;
+  onCreate: (createTask: NewTask, taskOptions: TaskOptions) => void;
 };
 
 const validateFileItem = (file: NewTaskFile) => file.source?.length > 0;
@@ -40,12 +41,23 @@ export function CreateTask(props: CreateTaskProps) {
     ],
   });
 
+  const [taskOptions, setTaskOptions] = createStore<TaskOptions>({
+    raw: false,
+  });
+
   onMount(async () => {
-    const config = await loadLatestTaskConfig();
-    if (config) {
+    const { task, taskOptions } = await loadLatestConfig();
+    if (task) {
       setNewTask((draft) => ({
         ...draft,
-        ...config,
+        ...task,
+      }));
+    }
+
+    if (taskOptions) {
+      setTaskOptions((draft) => ({
+        ...draft,
+        ...taskOptions,
       }));
     }
   });
@@ -148,8 +160,8 @@ export function CreateTask(props: CreateTaskProps) {
       delete createdTask.resize;
     }
 
-    saveLatestTaskConfig(createdTask);
-    props.onCreate?.(createdTask);
+    saveLatestTaskConfig(createdTask, unwrap(taskOptions));
+    props.onCreate?.(createdTask, unwrap(taskOptions));
   };
 
   const context = useContext(TaskContext);
@@ -242,6 +254,20 @@ export function CreateTask(props: CreateTaskProps) {
               />
             </div>
           </div>
+          <fieldset>
+            <legend>Task Run Options</legend>
+            <div class="field-row create-task-form__options">
+              <div class="create-task-form__raw">
+                <input
+                  id={id('task-options__raw')}
+                  type="checkbox"
+                  checked={taskOptions.raw}
+                  onChange={(e) => setTaskOptions('raw', e.target.checked)}
+                />
+                <label for={id('task-options__raw')}>Foreground Window</label>
+              </div>
+            </div>
+          </fieldset>
           <TaskFileContext.Provider value={taskFileContext}>
             <div class="sunken-panel create-task-form__files">
               <table>

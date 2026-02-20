@@ -1,5 +1,5 @@
 import path from 'path';
-import { app, BrowserWindow, ipcMain, Menu, session, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, session, shell, WebContents } from 'electron';
 import { spawn } from 'child_process';
 import started from 'electron-squirrel-startup';
 
@@ -7,7 +7,7 @@ import { handler } from './chooseFile';
 import { buildParseCommand, tryConvertingLine, tryDurationLine, tryPercentLine, trySummaryLine, type Summary } from './parser';
 import { generateUuid, killTasks, killTasksOnWindowCloseRequested } from './utils';
 import type { ParseTask } from './types';
-import type { StartParseResult, StartParsePayload } from '../shared/types';
+import type { StartParseResult, StartParsePayload, ParseEventData } from '../shared/types';
 
 if (started) {
   app.quit();
@@ -94,6 +94,11 @@ ipcMain.handle('show-item-in-folder', async (_event, { path }: { path: string; }
   shell.showItemInFolder(path);
 });
 
+
+const sendStartedParse = (sender: WebContents, data: ParseEventData['data']) => sender.send('parse-event', {
+  event: 'started',
+  data,
+});
 ipcMain.handle('start-parse', async (event, { options, taskOptions }: StartParsePayload): Promise<StartParseResult> => {
   const browserWindow = BrowserWindow.fromWebContents(event.sender);
 
@@ -102,6 +107,39 @@ ipcMain.handle('start-parse', async (event, { options, taskOptions }: StartParse
 
   // Create shell invocation similar to original: --login -c "<args...>"
   const args = ['--login', '-c', parseCommand.args.join(' ')];
+  if (taskOptions.raw) {
+    if (process.platform === 'win32') {
+      const proc = spawn('cmd.exe', [
+        '/c',
+        'start',
+        '""',
+        `"${parseCommand.command}"`,
+        '--login',
+        '-c',
+        `"${parseCommand.args.join(' ')}; echo; echo Press any key to close...; read -n 1"`,
+      ], {
+        windowsVerbatimArguments: true,
+      });
+      proc.on('close', (code) => {
+        event.sender.send('parse-event', {
+          event: 'finished',
+          data: {
+            id,
+            success: code === 0,
+            summaries: [],
+          },
+        });
+      });
+
+      sendStartedParse(event.sender, { id });
+
+      return {
+        started: true,
+        id,
+      };
+    }
+  }
+
   const child = spawn(parseCommand.command, args, { stdio: ['pipe', 'pipe', 'pipe'] });
 
   const parseTask = {
@@ -111,11 +149,7 @@ ipcMain.handle('start-parse', async (event, { options, taskOptions }: StartParse
   };
   runningTasks.set(id, parseTask);
 
-  // Send Started
-  event.sender.send('parse-event', {
-    event: 'started',
-    data: { id },
-  });
+  sendStartedParse(event.sender, { id });
 
   const summaries: Summary[] = [];
 

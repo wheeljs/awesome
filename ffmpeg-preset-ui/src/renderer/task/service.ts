@@ -2,7 +2,7 @@ import { pick } from 'lodash-es';
 import { fromEventPattern, share, type Observable } from 'rxjs';
 
 import type { NewTask, TaskEvent } from './types';
-import type { ParseEventData } from '../../shared/types';
+import type { TaskOptions, ParseEventData } from '../../shared/types';
 
 interface NewTaskInService extends Omit<NewTask, 'files'> {
   files: string[][];
@@ -33,7 +33,7 @@ export function init() {
   };
 }
 
-export function createParseTask(task: NewTask): CreateTaskResult {
+export function createParseTask(task: NewTask, options: TaskOptions): CreateTaskResult {
   const { files, ...newTask } = task;
   const newTaskInService = newTask as NewTaskInService;
 
@@ -46,7 +46,7 @@ export function createParseTask(task: NewTask): CreateTaskResult {
   }
 
   // Call Electron main to start parse and subscribe to events via preload bridge
-  const pending = window.electronAPI.startParse(newTaskInService, {});
+  const pending = window.electronAPI.startParse(newTaskInService, options);
 
   const channel = {
     onmessage: (_: any) => {},
@@ -67,22 +67,43 @@ export function terminateParseTask({ taskId }: { taskId: string }): Promise<bool
 }
 
 type LatestTaskConfig = Pick<NewTask, 'command' | 'bashFile' | 'gpu' | 'useResize' | 'resize' | 'bitrate'>;
+type LatestConfig = {
+  task?: LatestTaskConfig;
+  taskOptions?: TaskOptions;
+};
 const LatestTaskConfigStorageKey = 'latestTaskConfig';
+const TaskOptionsStorageKey = 'latestTaskOptions';
 
-export function loadLatestTaskConfig(): Promise<LatestTaskConfig | undefined> {
-  return new Promise((resolve) => {
-    const latestTaskConfigStr = localStorage[LatestTaskConfigStorageKey];
-    try {
-      resolve(JSON.parse(latestTaskConfigStr));
-    } catch {
-      resolve(undefined);
-    }
-  });
+export async function loadLatestConfig(): Promise<LatestConfig> {
+  const [taskResult, optionsResult] = await Promise.allSettled([
+    new Promise<LatestTaskConfig>((resolve) => {
+      const latestTaskConfigStr = localStorage[LatestTaskConfigStorageKey];
+      try {
+        resolve(JSON.parse(latestTaskConfigStr));
+      } catch {
+        resolve(undefined);
+      }
+    }),
+    new Promise<TaskOptions>((resolve) => {
+      const taskOptionsStr = localStorage[TaskOptionsStorageKey];
+      try {
+        resolve(JSON.parse(taskOptionsStr));
+      } catch {
+        resolve(undefined);
+      }
+    }),
+  ]);
+
+  return {
+    task: taskResult.status === 'fulfilled' ? taskResult.value : undefined,
+    taskOptions: optionsResult.status === 'fulfilled' ? optionsResult.value : undefined,
+  };
 }
 
-export function saveLatestTaskConfig(config: LatestTaskConfig): Promise<void> {
+export function saveLatestTaskConfig(config: LatestTaskConfig, taskOptions: TaskOptions): Promise<void> {
   return new Promise((resolve) => {
     localStorage[LatestTaskConfigStorageKey] = JSON.stringify(pick(config, 'command', 'bashFile', 'gpu', 'useResize', 'resize', 'bitrate'));
+    localStorage[TaskOptionsStorageKey] = JSON.stringify(taskOptions);
     resolve();
   });
 }

@@ -1,6 +1,7 @@
 import { type Summary, type ParseOptions } from '../main/parser';
 
 export type TaskOptions = {
+  raw?: boolean;
   need_std_output?: boolean;
 };
 
