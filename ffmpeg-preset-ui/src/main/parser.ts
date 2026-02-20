@@ -1,5 +1,3 @@
-import path from 'path';
-
 export type ParseOptions = {
   command: string;
   bashFile: string;
@@ -32,23 +30,10 @@ function ensureUnixPath(path: string) {
   return normalizeUnixPath(path);
 }
 
-function ensureBashFile(bashFile: string): string[] {
-  try {
-    const parent = path.dirname(bashFile);
-    const fileName = path.basename(bashFile);
-    const out: string[] = [];
-    if (parent && parent !== '.' && parent !== '/') {
-      out.push(`cd ${ensureUnixPath(parent)} &&`);
-    }
-    out.push(fileName);
-    return out;
-  } catch (e) {
-    return [bashFile];
-  }
-}
-
 export function buildParseCommand(options: ParseOptions): ParseCommand {
-  const bashFileArgs = ensureBashFile(options.bashFile);
+  const bashFileArgs = [
+    ensureUnixPath(options.bashFile),
+  ];
 
   if (options.gpu) {
     bashFileArgs.push('--gpu');
