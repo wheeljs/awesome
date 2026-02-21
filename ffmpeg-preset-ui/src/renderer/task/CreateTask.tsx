@@ -113,7 +113,7 @@ export function CreateTask(props: CreateTaskProps) {
 
   useFileDrop({
     onFileDrop: (files) => {
-      if (files.length === 0) {
+      if (props.loading || files.length === 0) {
         return;
       }
 
