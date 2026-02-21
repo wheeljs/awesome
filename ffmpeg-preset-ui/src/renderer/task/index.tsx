@@ -65,10 +65,10 @@ function TaskComponent() {
         case 'parseFileFailed':
           {
             const evt = event as TaskEvent<'startParseFile'>;
-            const parsingFile = task.task!.files.find((x) => x.normalizedSource === evt.data.source);
+            const parsingFile = task.task.files.find((x) => x.normalizedSource === evt.data.source);
             if (parsingFile) {
               setTask(produce((draft) => {
-                const parsingFile = draft.task!.files.find((x) => x.normalizedSource === evt.data.source)!;
+                const parsingFile = draft.task.files.find((x) => x.normalizedSource === evt.data.source);
                 if (evt.data.target) {
                   parsingFile.normalizedTarget = evt.data.target;
                 }

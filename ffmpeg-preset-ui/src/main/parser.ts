@@ -48,11 +48,10 @@ export function buildParseCommand(options: ParseOptions): ParseCommand {
   }
 
   const filesArgs = options.files.map((f) => {
-    const source = Array.isArray(f) ? f[0] : (f as any)[0];
-    const target = Array.isArray(f) && (f as any).length > 1 ? (f as any)[1] : null;
-    const ensuredSource = ensureUnixPath(source as string);
+    const [ source, target ] = f;
+    const ensuredSource = ensureUnixPath(source);
     if (target) {
-      const ensuredTarget = ensureUnixPath(target as string);
+      const ensuredTarget = ensureUnixPath(target);
       return `${ensuredSource}:${ensuredTarget}`;
     }
     return ensuredSource;
