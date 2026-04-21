@@ -25,6 +25,18 @@ const validateFileItem = (file: NewTaskFile) => file.source?.length > 0;
 
 const IllegalPathRegex = /[[\]]/;
 
+const ResizesStorageKey = 'resizes';
+
+const getResize: () => Set<string> = () => {
+  return new Set(localStorage[ResizesStorageKey] ? JSON.parse(localStorage[ResizesStorageKey]) : []);
+};
+
+const saveResize = (resize: string) => {
+  const resizes = getResize();
+  resizes.add(resize?.trim?.());
+  localStorage[ResizesStorageKey] = JSON.stringify(Array.from(resizes).toReversed().slice(0, 5));
+};
+
 export function CreateTask(props: CreateTaskProps) {
   const IdPrefix = 'create-task-';
   const id = (part: string) => `${IdPrefix}${part}`;
@@ -161,6 +173,9 @@ export function CreateTask(props: CreateTaskProps) {
     }
 
     saveLatestTaskConfig(createdTask, unwrap(taskOptions));
+    if (newTask.useResize && newTask.resize) {
+      saveResize(newTask.resize);
+    }
     props.onCreate?.(createdTask, unwrap(taskOptions));
   };
 
@@ -186,6 +201,7 @@ export function CreateTask(props: CreateTaskProps) {
 
   const hasValidFile = () => newTask.files.filter(validateFileItem).length > 0;
 
+  const resizes = Array.from(getResize());
   return (
     <div>
       <form class="create-task-form" onSubmit={handleSubmit}>
@@ -239,10 +255,16 @@ export function CreateTask(props: CreateTaskProps) {
               <input
                 id={id('resize')}
                 type="text"
+                list="resizes"
                 disabled={!newTask.useResize}
                 value={newTask.resize}
                 onChange={(e) => updator('resize', e.target.value)}
               />
+              <datalist id="resizes">
+                <For each={resizes}>
+                  {(item) => <option value={item} />}
+                </For>
+              </datalist>
             </div>
             <div class="create-task-form__bitrate">
               <label for={id('bitrate')}>Bitrate:</label>
