@@ -1,9 +1,10 @@
 // ==UserScript==
-// @name         PikPak 中键复制标题
+// @name         PikPak 中键复制标题和更新检查
 // @namespace    http://tampermonkey.net/
-// @version      0.5.1
-// @description  中键点击Pikpak中的文件名即可复制
+// @version      0.6.0
+// @description  中键点击Pikpak中的文件名即可复制；更新的目录会高亮显示，需要先完整保存一次快照
 // @author       Wheeljs
+// @require      https://unpkg.com/umd-lodash@1.2.0/dist/debounce.min.js
 // @match        https://mypikpak.com/*
 // @match        https://*.mypikpak.com/*
 // @grant        GM_setClipboard
@@ -89,4 +90,80 @@
     },
     { capture: true, }
   );
+  
+  const getPageId = () => location.pathname;
+  const saveSnapshotBtn = document.createElement('button');
+  saveSnapshotBtn.textContent = '保存快照';
+  saveSnapshotBtn.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 4px 8px;
+    border: none;
+    border-radius: 6px;
+    background: #007bff;
+    color: #fff;
+    z-index: 2000;
+  `;
+
+  saveSnapshotBtn.addEventListener('click', () => {
+    const $fileListItems = document.querySelectorAll('ol.file-list > li');
+    const snapshots = Object.fromEntries(
+      Array.from($fileListItems)
+        .map(($fileItem) => {
+          const $thumb = $fileItem.querySelector('.folder-cover .cover .el-image img');
+          if (!$thumb) {
+            return;
+          }
+
+          return [
+            $fileItem.dataset['encodedId'],
+            {
+              thumb: $thumb.src,
+            },
+          ];
+        })
+        .filter(x => x)
+    );
+
+    localStorage.setItem(`snapshot-${getPageId()}`, JSON.stringify(snapshots));
+    showToast('快照更新成功！');
+  });
+
+  window.addEventListener('load', () => {
+    document.body.appendChild(saveSnapshotBtn);
+    const tmp = localStorage.getItem(`snapshot-${getPageId()}`);
+    if (!tmp) {
+      return;
+    }
+    const snapshots = JSON.parse(tmp);
+
+    const diffThumb = _.debounce((snapshots) => {
+      Object.entries(snapshots).forEach(([encodedId, { thumb }]) => {
+        const $fileItem = document.querySelector(`ol.file-list > li[data-encoded-id="${encodedId}"]`);
+        if (!$fileItem) {
+          return;
+        }
+
+        const $thumb = $fileItem.querySelector('.folder-cover .cover .el-image img');
+        if (!$thumb) {
+          return;
+        }
+
+        if ($thumb.src === thumb) {
+          return;
+        }
+
+        $fileItem.querySelector('.file-item').style.backgroundColor = '#c3d2f1';
+      });
+    }, 1200);
+
+    const fileListObserver = new MutationObserver((event) => {
+      diffThumb(snapshots);
+    });
+    fileListObserver.observe(document.querySelector('ol.file-list'), {
+      childList: true,
+      subtree: true,
+    });
+  });
 })();
