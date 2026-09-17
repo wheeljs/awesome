@@ -22,7 +22,7 @@
         e.preventDefault();
       }
     },
-    true,
+    { capture: true, },
   );
 
   function findText(node) {
