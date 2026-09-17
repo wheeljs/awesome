@@ -161,7 +161,7 @@
     const fileListObserver = new MutationObserver((event) => {
       diffThumb(snapshots);
     });
-    fileListObserver.observe(document.querySelector('ol.file-list'), {
+    fileListObserver.observe(document.querySelector('.drive-layout'), {
       childList: true,
       subtree: true,
     });
