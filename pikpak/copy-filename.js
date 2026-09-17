@@ -165,5 +165,7 @@
       childList: true,
       subtree: true,
     });
+
+    diffThumb(snapshots);
   });
 })();
