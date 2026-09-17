@@ -117,7 +117,7 @@
           }
 
           return [
-            $fileItem.dataset['encodedId'],
+            $fileItem.id,
             {
               thumb: $thumb.src,
             },
@@ -139,8 +139,8 @@
     const snapshots = JSON.parse(tmp);
 
     const diffThumb = _.debounce((snapshots) => {
-      Object.entries(snapshots).forEach(([encodedId, { thumb }]) => {
-        const $fileItem = document.querySelector(`ol.file-list > li[data-encoded-id="${encodedId}"]`);
+      Object.entries(snapshots).forEach(([id, { thumb }]) => {
+        const $fileItem = document.querySelector(`li#${id}`);
         if (!$fileItem) {
           return;
         }
