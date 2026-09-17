@@ -167,5 +167,7 @@
     });
 
     diffThumb(snapshots);
+
+    console.log('Pikpak 中键复制标题和更新检查已加载');
   });
 })();
