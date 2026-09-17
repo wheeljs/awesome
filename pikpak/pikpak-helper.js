@@ -1,7 +1,6 @@
 // ==UserScript==
 // @name         PikPak 中键复制标题和更新检查
-// @namespace    http://tampermonkey.net/
-// @version      0.6.0
+// @version      0.6.1
 // @description  中键点击Pikpak中的文件名即可复制；更新的目录会高亮显示，需要先完整保存一次快照
 // @author       Wheeljs
 // @require      https://unpkg.com/umd-lodash@1.2.0/dist/debounce.min.js
@@ -158,7 +157,7 @@
       });
     }, 1200);
 
-    const fileListObserver = new MutationObserver((event) => {
+    const fileListObserver = new MutationObserver(() => {
       diffThumb(snapshots);
     });
     fileListObserver.observe(document.querySelector('.drive-layout'), {
