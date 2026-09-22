@@ -8,11 +8,14 @@
 // @match        https://mypikpak.com/*
 // @match        https://*.mypikpak.com/*
 // @grant        GM_setClipboard
+// @grant        GM_addStyle
 // @license      GPL-3.0
 // ==/UserScript==
 
 (function () {
   'use strict';
+
+  const ScriptPrefix = '__pikpak-helper';
 
   // 阻止中键触发自动滚动
   window.addEventListener(
@@ -52,20 +55,8 @@
   // 简单气泡提示
   function showToast(text) {
     const div = document.createElement('div');
+    div.classList.add(`${ScriptPrefix}-message`);
     div.textContent = text;
-    div.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: rgba(0,0,0,0.75);
-      color: #fff;
-      padding: 8px 14px;
-      border-radius: 6px;
-      font-size: 14px;
-      z-index: 999999;
-      opacity: 0;
-      transition: opacity .2s ease;
-    `;
     document.body.appendChild(div);
 
     requestAnimationFrame(() => (div.style.opacity = 1));
@@ -93,18 +84,8 @@
   
   const getPageId = () => location.pathname;
   const saveSnapshotBtn = document.createElement('button');
+  saveSnapshotBtn.classList.add(`${ScriptPrefix}-save-snapshot-btn`);
   saveSnapshotBtn.textContent = '保存快照';
-  saveSnapshotBtn.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    padding: 4px 8px;
-    border: none;
-    border-radius: 6px;
-    background: #007bff;
-    color: #fff;
-    z-index: 2000;
-  `;
 
   saveSnapshotBtn.addEventListener('click', () => {
     const $fileListItems = document.querySelectorAll('ol.file-list > li');
@@ -128,6 +109,10 @@
 
     localStorage.setItem(`snapshot-${getPageId()}`, JSON.stringify(snapshots));
     showToast('快照更新成功！');
+
+    document.querySelectorAll(`.${ScriptPrefix}-has-update`).forEach(($fileItem) => {
+      $fileItem.classList.remove(`${ScriptPrefix}-has-update`);
+    });
   });
 
   window.addEventListener('load', () => {
@@ -137,6 +122,47 @@
       return;
     }
     const snapshots = JSON.parse(tmp);
+
+    GM_addStyle(`
+      .${ScriptPrefix}-message {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(0,0,0,0.75);
+        color: #fff;
+        padding: 8px 14px;
+        border-radius: 6px;
+        font-size: 14px;
+        z-index: 999999;
+        opacity: 0;
+        transition: opacity .2s ease;
+      }
+
+      .${ScriptPrefix}-save-snapshot-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 4px 8px;
+        border: none;
+        border-radius: 6px;
+        background: rgb(0, 123, 255, 0.8);
+        color: #fff;
+        cursor: pointer;
+        z-index: 2000;
+      }
+
+      .${ScriptPrefix}-save-snapshot-btn:hover {
+        background: rgb(0, 123, 255);
+      }
+
+      .file-item.grid {
+        transition: background-color 0.25s ease;
+      }
+
+      .${ScriptPrefix}-has-update .file-item {
+        background-color: #c3d2f1;        
+      }
+    `);
 
     const diffThumb = _.debounce((snapshots) => {
       Object.entries(snapshots).forEach(([id, { thumb }]) => {
@@ -153,8 +179,8 @@
         if ($thumb.src === thumb) {
           return;
         }
-
-        $fileItem.querySelector('.file-item').style.backgroundColor = '#c3d2f1';
+        
+        $fileItem.classList.add(`${ScriptPrefix}-has-update`);
       });
     }, 1200);
 
