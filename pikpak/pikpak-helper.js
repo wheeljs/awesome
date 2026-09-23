@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PikPak 中键复制标题和更新检查
 // @namespace    https://github.com/wheeljs
-// @version      0.7.0
+// @version      0.7.1
 // @description  中键点击Pikpak中的文件名即可复制；更新的目录会高亮显示，需要先完整保存一次快照
 // @author       wheeljs
 // @require      https://unpkg.com/umd-lodash@1.2.0/dist/debounce.min.js
