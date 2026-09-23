@@ -83,6 +83,8 @@
   );
   
   const getPageId = () => location.pathname;
+  let snapshotCache = {};
+
   const saveSnapshotBtn = document.createElement('button');
   saveSnapshotBtn.classList.add(`${ScriptPrefix}-save-snapshot-btn`);
   saveSnapshotBtn.textContent = '保存快照';
@@ -107,6 +109,7 @@
         .filter(x => x)
     );
 
+    snapshotCache = snapshots;
     localStorage.setItem(`snapshot-${getPageId()}`, JSON.stringify(snapshots));
     showToast('快照更新成功！');
 
@@ -121,7 +124,7 @@
     if (!tmp) {
       return;
     }
-    const snapshots = JSON.parse(tmp);
+    snapshotCache = JSON.parse(tmp);
 
     GM_addStyle(`
       .${ScriptPrefix}-message {
@@ -185,14 +188,14 @@
     }, 1200);
 
     const fileListObserver = new MutationObserver(() => {
-      diffThumb(snapshots);
+      diffThumb(snapshotCache);
     });
     fileListObserver.observe(document.querySelector('.drive-layout'), {
       childList: true,
       subtree: true,
     });
 
-    diffThumb(snapshots);
+    diffThumb(snapshotCache);
 
     console.log('Pikpak 中键复制标题和更新检查已加载');
   });
