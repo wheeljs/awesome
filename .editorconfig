@@ -1,2 +1,5 @@
 [*.{js,ts}]
 indent_size = 2
+
+trailing_whitespace = true
+empty_lines = true
