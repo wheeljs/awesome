@@ -121,10 +121,9 @@
   window.addEventListener('load', () => {
     document.body.appendChild(saveSnapshotBtn);
     const tmp = localStorage.getItem(`snapshot-${getPageId()}`);
-    if (!tmp) {
-      return;
+    if (tmp) {
+      snapshotCache = JSON.parse(tmp);
     }
-    snapshotCache = JSON.parse(tmp);
 
     GM_addStyle(`
       .${ScriptPrefix}-message {
